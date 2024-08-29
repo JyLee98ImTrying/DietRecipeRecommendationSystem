@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title('🎈 App Name')
+st.title('🍅 Diet & Recipe Recommendation App')
 
-st.write('Hello world!')
+st.info('This app provides recipe recommendations based on your health conditions, BMI and wellness goals')
