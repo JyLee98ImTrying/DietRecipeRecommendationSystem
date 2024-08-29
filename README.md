@@ -1,13 +1,10 @@
-# 📦 Streamlit App Starter Kit 
-```
-⬆️ (Replace above with your app's name)
-```
+# 🍔🍕 Diet & Recipe Recommendation App
 
-Description of the app ...
+This app recommends diets and recipes to users based on health conditions, BMI and wellness goals. 
 
 ## Demo App
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://DietRecipeRecommendationSystem.streamlit.app/)
 
 ## GitHub Codespaces
 
