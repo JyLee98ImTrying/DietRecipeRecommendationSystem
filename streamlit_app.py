@@ -58,4 +58,8 @@ def filter_for_high_cholesterol(df, calorie):
     return df[(df['FatContent'] <= fat_limit) & 
               (df['SaturatedFatContent'] < saturated_fat_limit)]
 
-
+# Model predictions
+if st.button('Recommend Recipes'):
+    # Predict with each model
+xgb_prediction = xgb_model.predict(df.drop(columns=['Name', 'AuthorName', 'RecipeInstructions', 'RecipeCategory', 'RecipeIngredientParts', 'RecipeIngredientQuantities']))
+  
