@@ -1,6 +1,9 @@
 import streamlit as st
-import pandas as pd 
-import numpy as np 
+import numpy as np
+import pandas as pd
+import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 st.title('🍅 Diet & Recipe Recommendation App')
@@ -54,3 +57,9 @@ def filter_for_high_cholesterol(df, calorie):
     
     return df[(df['FatContent'] <= fat_limit) & 
               (df['SaturatedFatContent'] < saturated_fat_limit)]
+
+# Preprocess data for content-based filtering
+# Create TF-IDF vectors for the combined text
+tfidf_vectorizer = TfidfVectorizer(stop_words='english')
+tfidf_matrix = tfidf_vectorizer.fit_transform(df['CombinedText'])
+
