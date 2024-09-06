@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd 
 import numpy as np 
 
-# Load models
-xgb_model = joblib.load('XGBoost_model.pkl')
-
 
 st.title('🍅 Diet & Recipe Recommendation App')
 
@@ -57,9 +54,3 @@ def filter_for_high_cholesterol(df, calorie):
     
     return df[(df['FatContent'] <= fat_limit) & 
               (df['SaturatedFatContent'] < saturated_fat_limit)]
-
-# Model predictions
-if st.button('Recommend Recipes'):
-    # Predict with each model
-    xgb_prediction = xgb_model.predict(df.drop(columns=['Name', 'AuthorName', 'RecipeInstructions', 'RecipeCategory', 'RecipeIngredientParts', 'RecipeIngredientQuantities']))
-  
