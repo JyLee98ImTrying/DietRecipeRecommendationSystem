@@ -61,5 +61,5 @@ def filter_for_high_cholesterol(df, calorie):
 # Model predictions
 if st.button('Recommend Recipes'):
     # Predict with each model
-xgb_prediction = xgb_model.predict(df.drop(columns=['Name', 'AuthorName', 'RecipeInstructions', 'RecipeCategory', 'RecipeIngredientParts', 'RecipeIngredientQuantities']))
+    xgb_prediction = xgb_model.predict(df.drop(columns=['Name', 'AuthorName', 'RecipeInstructions', 'RecipeCategory', 'RecipeIngredientParts', 'RecipeIngredientQuantities']))
   
