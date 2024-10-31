@@ -18,7 +18,7 @@ st.markdown(
 )
 
 #Streamlit App title
-st.title('🍅🧀Diet and Recipe Recommendation System🥑🥬')
+st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # User inputs
 weight = st.number_input('Enter your weight (kg):', min_value=0.0, step=0.1)
