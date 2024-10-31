@@ -7,7 +7,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Streamlit UI
 # Display an image at the top
-st.image('https://img.freepik.com/free-vector/main-food-groups-macronutrients-vector_1308-130027.jpg?t=st=1730365974~exp=1730369574~hmac=72044aa7f1e2f1012e0497ad08724dcb894287c97946d34f69ddf08d8f017c0b&w=740', caption='Healthy Eating', width=200)
+# Center and resize the image using HTML & CSS
+st.markdown(
+    """
+    <div style='text-align: center;'>
+        <img src='https://img.freepik.com/free-vector/main-food-groups-macronutrients-vector_1308-130027.jpg?t=st=1730365974~exp=1730369574~hmac=72044aa7f1e2f1012e0497ad08724dcb894287c97946d34f69ddf08d8f017c0b&w=740' alt='Healthy Eating' style='width:150px;'>
+    </div>
+    """,
+    unsafe_allow_html=True, width= 200
+) 
 
 #Streamlit App title
 st.title('🍅🧀Diet and Recipe Recommendation System🥑🥬')
