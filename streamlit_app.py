@@ -5,12 +5,6 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load models
-rf_model = joblib.load('Random_Forest_model.pkl')
-dt_model = joblib.load('Decision_Tree_model.pkl')
-nb_model = joblib.load('Naive_Bayes_model.pkl')
-xgb_model = joblib.load('XGBoost_model.pkl')
-
 # Load data
 df = pd.read_csv('RecipeData.csv')  # Update with your actual file path
 
