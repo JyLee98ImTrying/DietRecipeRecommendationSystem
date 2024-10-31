@@ -14,10 +14,9 @@ height = st.number_input('Enter your height (cm):', min_value=0.0, step=0.1)
 bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 st.write(f'Your BMI is: {bmi:.2f}')
 
-health_condition = st.selectbox('Select your health condition:',
-                                ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"])
+# Allow multiple selections for health conditions
+health_conditions = st.multiselect('Select your health condition(s):',
+                                   ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"])
 
 wellness_goal = st.selectbox('Select your wellness goal:',
                              ["No goals", "Lose Fat", "Gain Muscle"])
-
-calorie = st.number_input('Enter your daily calorie requirement (kcal):', min_value=0.0, step=10.0)
