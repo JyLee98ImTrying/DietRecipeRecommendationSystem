@@ -17,7 +17,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-#Streamlit App title
+# Streamlit App title
 st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # User inputs
@@ -27,8 +27,16 @@ bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 st.write(f'Your BMI is: {bmi:.2f}')
 
 # Allow multiple selections for health conditions
-health_conditions = st.multiselect('Select your health condition(s):',
-                                   ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"])
+health_conditions = st.multiselect(
+    'Select your health condition(s):',
+    ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"]
+)
 
-wellness_goal = st.selectbox('Select your wellness goal:',
-                             ["No goals", "Lose Fat", "Gain Muscle"])
+# Show wellness goal selector only if "No Non-Communicable Disease" is selected
+if "No Non-Communicable Disease" in health_conditions:
+    wellness_goal = st.selectbox(
+        'Select your wellness goal:',
+        ["No goals", "Lose Fat", "Gain Muscle"]
+    )
+else:
+    st.write("Wellness goals are hidden because a health condition is selected.")
