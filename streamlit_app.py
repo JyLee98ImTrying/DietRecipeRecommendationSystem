@@ -21,8 +21,8 @@ st.markdown(
 st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # User inputs
-weight = st.number_input('Enter your weight (kg):', min_value=0.0, step=0.1)
-height = st.number_input('Enter your height (cm):', min_value=0.0, step=0.1)
+weight = st.number_input('Enter your weight (kg):')
+height = st.number_input('Enter your height (cm):')
 bmi = weight / ((height / 100) ** 2) if height > 0 else 0
 st.write(f'Your BMI is: {bmi:.2f}')
 
@@ -39,4 +39,4 @@ if "No Non-Communicable Disease" in health_conditions:
         ["No goals", "Lose Fat", "Gain Muscle"]
     )
 else:
-    st.write("Wellness goals are hidden because a health condition is selected.")
+    st.write("Diets based on wellness goals are not available for selection due to existing health condition.")
