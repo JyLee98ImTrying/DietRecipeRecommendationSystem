@@ -10,9 +10,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 with open('scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-with open('kmeans.pkl', 'rb') as f:
-    kmeans = pickle.load(f)
-
 with open('knn.pkl', 'rb') as f:
     knn = pickle.load(f)
 
