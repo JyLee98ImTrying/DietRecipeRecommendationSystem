@@ -147,6 +147,6 @@ if st.button("Get Recommendations"):
         nutrient_requirements['SaturatedFats']
     ])
     
-    recommendations = recommend_food(input_data, health_condition)
+    recommendations = recommend_food(input_data, df)
     st.write("Recommended food items:")
     st.write(recommendations)
