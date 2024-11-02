@@ -7,15 +7,21 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load models
-with open('scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
+try:
+    with open('kmeans.pkl', 'rb') as f:
+        kmeans_model = pickle.load(f)
+    st.write("KMeans model loaded successfully.")
+    
+    with open('rf_classifier.pkl', 'rb') as f:
+        rf_model = pickle.load(f)
+    st.write("Random Forest model loaded successfully.")
 
-with open('knn.pkl', 'rb') as f:
-    knn = pickle.load(f)
+    with open('scaler.pkl', 'rb') as f:
+        scaler = pickle.load(f)
+    st.write("Scaler loaded successfully.")
 
-with open('rf_classifier.pkl', 'rb') as f:
-    rf_classifier = pickle.load(f)
-
+except FileNotFoundError as e:
+    st.error(f"Error loading model: {e}")
 # Function to calculate daily caloric needs
 def calculate_caloric_needs(gender, weight, height, age):
     if gender == "Female":
