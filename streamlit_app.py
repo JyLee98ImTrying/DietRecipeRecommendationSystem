@@ -5,8 +5,18 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
+import gdown
 
-df = pd.read_csv("HealthData.csv")
+# Function to download CSV from Google Drive
+def download_file_from_gdrive(file_id, output_file):
+    gdown.download(f'https://drive.google.com/file/d/1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb/view?usp=sharing/uc?id={file_id}', output_file, quiet=False)
+
+# Replace with your Google Drive file ID
+file_id = '1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb'
+download_file_from_gdrive(file_id, 'RecipeData.csv')
+
+# Load the DataFrame
+df = pd.read_csv("RecipeData.csv")
 
 # Check columns
 st.write("Columns in DataFrame:", df.columns.tolist())
