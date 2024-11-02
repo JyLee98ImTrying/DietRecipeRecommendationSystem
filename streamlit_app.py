@@ -8,6 +8,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 df = pd.read_csv("HealthData.csv")
 
+# Check columns
+st.write("Columns in DataFrame:", df.columns.tolist())
+
+# Add this if Cluster column is not present
+if 'Cluster' not in df.columns:
+    # Prepare features for clustering based on existing nutrient columns (update as necessary)
+    features = df[['Calories', 'ProteinContent', 'FatContent', 
+                   'CarbohydrateContent', 'SodiumContent', 
+                   'CholesterolContent', 'SaturatedFatContent']].values
+    cluster_labels = kmeans_model.predict(features)
+    df['Cluster'] = cluster_labels
+
 # Load models
 try:
     with open('kmeans (1).pkl', 'rb') as f:
