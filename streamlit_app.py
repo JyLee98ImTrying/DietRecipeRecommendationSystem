@@ -15,9 +15,19 @@ def download_file_from_gdrive(file_id, output_file):
 file_id = '1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb'
 download_file_from_gdrive(file_id, 'RecipeData.csv')
 
-# Load the DataFrame
-df = pd.read_csv("RecipeData.csv")
+try:
+    # Attempt to read the CSV file
+    df = pd.read_csv("RecipeData.csv")
+except pd.errors.ParserError as e:
+    st.write("ParserError:", e)
+    # Additional troubleshooting
+    with open("RecipeData.csv", 'r') as file:
+        content = file.readlines()
+        st.write("First few lines of the file:", content[:5])  # Print first 5 lines
 
+# Proceed if df is loaded correctly
+if 'df' in locals():
+    st.write("Columns in DataFrame:", df.columns.tolist())
 # Check columns
 st.write("Columns in DataFrame:", df.columns.tolist())
 
