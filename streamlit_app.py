@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
+df = pd.read_csv("Data/HealthData.csv")
+
 # Load models
 try:
     with open('kmeans.pkl', 'rb') as f:
