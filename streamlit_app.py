@@ -6,6 +6,73 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Load models
+with open('scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
+
+with open('kmeans.pkl', 'rb') as f:
+    kmeans = pickle.load(f)
+
+with open('knn.pkl', 'rb') as f:
+    knn = pickle.load(f)
+
+with open('rf_classifier.pkl', 'rb') as f:
+    rf_classifier = pickle.load(f)
+
+# Function to calculate daily caloric needs
+def calculate_caloric_needs(gender, weight, height, age):
+    if gender == "Female":
+        BMR = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+    else:
+        BMR = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
+    return BMR
+
+# Function to calculate nutrient requirements based on health condition
+def calculate_nutrient_requirements(daily_calories, health_condition, weight):
+    nutrient_requirements = {
+        'Calories': daily_calories,
+        'Protein': 0,
+        'Fats': 0,
+        'Carbohydrates': 0,
+        'Sodium': 0,
+        'Cholesterol': 0,
+        'SaturatedFats': 0
+    }
+    
+    if health_condition == "Diabetic":
+        nutrient_requirements['Protein'] = 0.8 * weight
+        nutrient_requirements['Fats'] = 0.25 * daily_calories
+        nutrient_requirements['Carbohydrates'] = 0.6 * daily_calories
+        nutrient_requirements['Sodium'] = 2000
+        nutrient_requirements['Cholesterol'] = 200
+    elif health_condition == "High Blood Pressure":
+        nutrient_requirements['Protein'] = 0.5 * daily_calories / 4
+        nutrient_requirements['Fats'] = 0.25 * daily_calories / 9
+        nutrient_requirements['Carbohydrates'] = 0.6 * daily_calories / 4
+        nutrient_requirements['Sodium'] = 1000
+        nutrient_requirements['Cholesterol'] = 300
+    elif health_condition == "High Cholesterol":
+        nutrient_requirements['Protein'] = 0.5 * daily_calories / 4
+        nutrient_requirements['Fats'] = daily_calories * 0.15 / 9
+        nutrient_requirements['SaturatedFats'] = daily_calories * 0.10 / 9
+        nutrient_requirements['Sodium'] = 2000
+        nutrient_requirements['Cholesterol'] = 200
+    
+    return nutrient_requirements
+
+# Define recommendation function
+def recommend_food(input_data, health_condition=None):
+    input_data_scaled = scaler.transform([input_data])
+    predicted_cluster = rf_classifier.predict(input_data_scaled)[0]
+    cluster_data = df[df['Cluster'] == predicted_cluster][nutrient_features]
+    cluster_data_scaled = scaler.transform(cluster_data)
+    similarities = cosine_similarity(input_data_scaled, cluster_data_scaled).flatten()
+    cluster_data['Similarity'] = similarities
+    top_recommendations = cluster_data.sort_values(by="Similarity", ascending=False).head(10)
+    recommended_food_names = df.loc[top_recommendations.index, 'Name']
+    return recommended_food_names
+
+
 # Streamlit UI
 # Display an image at the top
 # Center and resize the image using HTML & CSS
