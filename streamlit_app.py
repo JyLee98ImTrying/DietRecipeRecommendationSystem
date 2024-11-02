@@ -66,16 +66,42 @@ def calculate_nutrient_requirements(daily_calories, health_condition, weight):
     return nutrient_requirements
 
 # Define recommendation function
-def recommend_food(input_data, health_condition=None):
+def recommend_food(input_data, df):
+    # Scale the input data using the preloaded scaler
     input_data_scaled = scaler.transform([input_data])
-    predicted_cluster = rf_classifier.predict(input_data_scaled)[0]
-    cluster_data = df[df['Cluster'] == predicted_cluster][nutrient_features]
-    cluster_data_scaled = scaler.transform(cluster_data)
-    similarities = cosine_similarity(input_data_scaled, cluster_data_scaled).flatten()
+
+    # Use KMeans to find the closest cluster to the user's input
+    cluster_label = kmeans_model.predict(input_data_scaled)[0]
+    
+    # Filter the dataset to get food items in the predicted cluster
+    cluster_data = df[df['Cluster'] == cluster_label]
+    
+    # Scale the nutrient features of the filtered data
+    cluster_features_scaled = scaler.transform(cluster_data[['Calories', 'ProteinContent', 'FatContent', 
+                                                             'CarbohydrateContent', 'SodiumContent', 
+                                                             'CholesterolContent', 'SaturatedFatContent']])
+    
+    # Calculate cosine similarity between the user's input and each food item in the cluster
+    similarities = cosine_similarity(input_data_scaled, cluster_features_scaled).flatten()
+    
+    # Add similarity scores to the cluster data and sort by similarity
+    cluster_data = cluster_data.copy()  # To avoid modifying original df
     cluster_data['Similarity'] = similarities
-    top_recommendations = cluster_data.sort_values(by="Similarity", ascending=False).head(10)
-    recommended_food_names = df.loc[top_recommendations.index, 'Name']
-    return recommended_food_names
+    recommended_foods = cluster_data.sort_values(by='Similarity', ascending=False)
+
+    # Use Random Forest classifier to further filter recommendations based on health condition or wellness goal
+    rf_predictions = rf_model.predict(cluster_features_scaled)
+    recommended_foods['Classification'] = rf_predictions
+
+    # Filter recommended foods based on the Random Forest classification
+    # For simplicity, assume a binary classification where '1' is the preferred class
+    # (You may adjust this based on your model’s specific classes)
+    final_recommendations = recommended_foods[recommended_foods['Classification'] == 1]
+
+    # Return top 5 recommendations
+    return final_recommendations[['FoodName', 'Calories', 'ProteinContent', 'FatContent', 
+                                  'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
+                                  'SaturatedFatContent', 'Similarity']].head(5)
 
 
 # Streamlit UI
