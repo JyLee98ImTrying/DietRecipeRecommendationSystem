@@ -10,7 +10,7 @@ df = pd.read_csv("HealthData.csv")
 
 # Load models
 try:
-    with open('kmeans.pkl', 'rb') as f:
+    with open('kmeans (1).pkl', 'rb') as f:
         kmeans_model = pickle.load(f)
     st.write("KMeans model loaded successfully.")
     
