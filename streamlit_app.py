@@ -9,36 +9,35 @@ import gdown
 
 # Function to download CSV from Google Drive
 def download_file_from_gdrive(file_id, output_file):
-    gdown.download(f'https://drive.google.com/file/d/1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb/view?usp=sharing/uc?id={file_id}', output_file, quiet=False)
+    gdown.download(f'https://drive.google.com/uc?id={file_id}', output_file, quiet=False)
 
 # Replace with your Google Drive file ID
 file_id = '1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb'
 download_file_from_gdrive(file_id, 'RecipeData.csv')
 
 try:
-    # Attempt to read the CSV file
-    df = pd.read_csv("RecipeData.csv")
+    # Attempt to read the CSV file with error handling
+    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', error_bad_lines=False)
+    st.write("Data loaded successfully.")
 except pd.errors.ParserError as e:
     st.write("ParserError:", e)
-    # Additional troubleshooting
+    # Additional troubleshooting: print first few lines of the file to investigate
     with open("RecipeData.csv", 'r') as file:
         content = file.readlines()
-        st.write("First few lines of the file:", content[:5])  # Print first 5 lines
+        st.write("First few lines of the file:", content[:5])
 
 # Proceed if df is loaded correctly
 if 'df' in locals():
     st.write("Columns in DataFrame:", df.columns.tolist())
-# Check columns
-st.write("Columns in DataFrame:", df.columns.tolist())
 
-# Add this if Cluster column is not present
-if 'Cluster' not in df.columns:
-    # Prepare features for clustering based on existing nutrient columns (update as necessary)
-    features = df[['Calories', 'ProteinContent', 'FatContent', 
-                   'CarbohydrateContent', 'SodiumContent', 
-                   'CholesterolContent', 'SaturatedFatContent']].values
-    cluster_labels = kmeans_model.predict(features)
-    df['Cluster'] = cluster_labels
+    # Ensure 'Cluster' column is present, otherwise assign clusters
+    if 'Cluster' not in df.columns:
+        # Prepare features for clustering
+        features = df[['Calories', 'ProteinContent', 'FatContent', 
+                       'CarbohydrateContent', 'SodiumContent', 
+                       'CholesterolContent', 'SaturatedFatContent']].values
+        cluster_labels = kmeans_model.predict(features)
+        df['Cluster'] = cluster_labels
 
 # Load models
 try:
