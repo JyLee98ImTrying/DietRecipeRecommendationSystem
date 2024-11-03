@@ -14,11 +14,11 @@ def download_file_from_gdrive(file_id, output_file):
     gdown.download(f'https://drive.google.com/uc?id={file_id}', output_file, quiet=False)
 
 # Replace with your Google Drive file ID
-file_id = '1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb'
-download_file_from_gdrive(file_id, 'RecipeData.csv')
+file_id = '1qle68mxmhtaF5NPBV1VregS-dz-Q9sDG'
+download_file_from_gdrive(file_id, 'df_MHMF.csv')
 
 try:
-    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', on_bad_lines='skip')
+    df = pd.read_csv("df_MHMF.csv", delimiter=',', encoding='utf-8', on_bad_lines='skip')
     st.write("Data loaded successfully.")
     st.write(df.head())  # Display first few rows to confirm structure
 except Exception as e:
