@@ -7,6 +7,8 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 import gdown
 
+st.cache_data.clear()
+
 # Function to download CSV from Google Drive
 def download_file_from_gdrive(file_id, output_file):
     gdown.download(f'https://drive.google.com/uc?id={file_id}', output_file, quiet=False)
