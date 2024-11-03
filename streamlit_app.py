@@ -18,8 +18,9 @@ file_id = '1PCrMr8RxbZMIPcFbSB3AvTmA4BVoPlhb'
 download_file_from_gdrive(file_id, 'RecipeData.csv')
 
 try:
-    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', on_bad_lines='skip', nrows=5)
-    st.write(df.head())
+    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', on_bad_lines='skip')
+    st.write("Data loaded successfully.")
+    st.write(df.head())  # Display first few rows to confirm structure
 except Exception as e:
     st.write("Error loading file:", e)
     # Additional troubleshooting: print first few lines of the file to investigate
