@@ -28,19 +28,6 @@ except Exception as e:
         content = file.readlines()
         st.write("First few lines of the file:", content[:5])
 
-# Proceed if df is loaded correctly
-if 'df' in locals():
-    st.write("Columns in DataFrame:", df.columns.tolist())
-
-    # Ensure 'Cluster' column is present, otherwise assign clusters
-    if 'Cluster' not in df.columns:
-        # Prepare features for clustering
-        features = df[['Calories', 'ProteinContent', 'FatContent', 
-                       'CarbohydrateContent', 'SodiumContent', 
-                       'CholesterolContent', 'SaturatedFatContent']].values
-        cluster_labels = kmeans_model.predict(features)
-        df['Cluster'] = cluster_labels
-
 # Load models
 try:
     with open('kmeans (1).pkl', 'rb') as f:
