@@ -17,7 +17,7 @@ download_file_from_gdrive(file_id, 'RecipeData.csv')
 
 try:
     # Attempt to read the CSV file with error handling
-    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', error_bad_lines=False)
+    df = pd.read_csv("RecipeData.csv", delimiter=',', encoding='utf-8', on_bad_lines='skip')
     st.write("Data loaded successfully.")
 except pd.errors.ParserError as e:
     st.write("ParserError:", e)
