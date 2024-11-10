@@ -9,8 +9,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Function definitions
 def load_data():
     try:
-        # Direct download link for Dropbox - ensure it's the direct download link
-        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
+        # Corrected Dropbox direct download link with `?dl=1`
+        url = 'https://www.dropbox.com/s/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
         # Set up headers to mimic a browser request
         headers = {
@@ -28,29 +28,15 @@ def load_data():
             st.error(f"Failed to download file: Status code {response.status_code}")
             return None
             
-        # Check if we got HTML instead of CSV
+        # Verify response content is CSV
         content_type = response.headers.get('content-type', '').lower()
-        if 'text/html' in content_type:
+        if 'text/html' in content_type or '<!DOCTYPE' in response.text:
             st.error("Received HTML instead of CSV data. Please check the download URL.")
             return None
-            
-        # Try to read the first few bytes to check if it's CSV
-        try:
-            content_start = response.content[:100].decode('utf-8')
-            if '<!DOCTYPE' in content_start or '<html' in content_start:
-                st.error("Received HTML content instead of CSV data. Please verify the download URL.")
-                return None
-        except:
-            pass
-            
+
         # Read CSV with specific handling for complex fields
         try:
-            df = pd.read_csv(
-                io.BytesIO(response.content),
-                delimiter=',',
-                encoding='utf-8',
-                on_bad_lines='skip'
-            )
+            df = pd.read_csv(io.BytesIO(response.content), delimiter=',', encoding='utf-8', on_bad_lines='skip')
             
             # Display the first few rows and columns for debugging
             st.write("DataFrame head:", df.head())
@@ -67,7 +53,6 @@ def load_data():
                 st.write("Cluster distribution:", df['Cluster'].value_counts())
             else:
                 st.error(f"'Cluster' column not found. Available columns: {df.columns.tolist()}")
-                st.error("Please ensure the CSV file contains the required 'Cluster' column.")
                 return None
             
             return df
@@ -83,7 +68,6 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
-        
 def load_models():
     try:
         model_files = {
