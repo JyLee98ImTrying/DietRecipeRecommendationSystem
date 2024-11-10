@@ -13,52 +13,79 @@ st.cache_data.clear()
 
 def load_data():
     try:
-        # Convert Dropbox share link to direct download link
+        import requests
+        
+        # Modify URL to force download
         url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
-        # Load the data
-        df = pd.read_csv(url, delimiter=',', encoding='utf-8')
-        
-        # Debug information
-        st.write("DataFrame Info:")
-        st.write(df.info())
-        
-        st.write("\nColumn names (with lengths):")
-        for col in df.columns:
-            st.write(f"'{col}' - Length: {len(col)}")
-        
-        st.write("\nFirst few rows of 'Cluster' column (if exists):")
-        if 'Cluster' in df.columns:
-            st.write(df['Cluster'].head())
-        else:
-            # Check for similar column names
-            similar_cols = [col for col in df.columns if 'cluster' in col.lower()]
-            st.write("Columns containing 'cluster' (case-insensitive):", similar_cols)
+        # Download the file content first
+        response = requests.get(url)
+        if response.status_code != 200:
+            st.error(f"Failed to download file: Status code {response.status_code}")
+            return None
             
-            # Print all column names for debugging
-            st.write("\nAll column names:")
-            for idx, col in enumerate(df.columns):
-                st.write(f"{idx}. {col!r}")  # Using repr to show hidden characters
+        # Save content to a temporary string
+        content = response.content.decode('utf-8')
         
-        # Try to load the column with different methods
+        # Debug: Show first few lines of raw content
+        st.write("First few lines of raw file content:")
+        st.text(content[:500])
+        
+        # Try to read with different settings
         try:
-            cluster_col = df.get('Cluster')
-            st.write("\nUsing df.get('Cluster'):", cluster_col is not None)
+            # First attempt: standard CSV reading
+            df = pd.read_csv(
+                io.StringIO(content),
+                delimiter=',',
+                encoding='utf-8',
+                on_bad_lines='skip',
+                engine='python'  # More flexible but slower engine
+            )
         except Exception as e:
-            st.write("Error with df.get:", str(e))
+            st.write(f"First attempt failed: {str(e)}")
+            try:
+                # Second attempt: with different encoding
+                df = pd.read_csv(
+                    io.StringIO(content),
+                    delimiter=',',
+                    encoding='latin1',
+                    on_bad_lines='skip',
+                    engine='python'
+                )
+            except Exception as e:
+                st.write(f"Second attempt failed: {str(e)}")
+                try:
+                    # Third attempt: try to detect delimiter
+                    import csv
+                    dialect = csv.Sniffer().sniff(content[:1024])
+                    st.write(f"Detected delimiter: {dialect.delimiter}")
+                    
+                    df = pd.read_csv(
+                        io.StringIO(content),
+                        delimiter=dialect.delimiter,
+                        encoding='utf-8',
+                        on_bad_lines='skip',
+                        engine='python'
+                    )
+                except Exception as e:
+                    st.write(f"Third attempt failed: {str(e)}")
+                    raise
+
+      # If we successfully loaded the DataFrame
+        if df is not None:
+            st.write("DataFrame loaded successfully!")
+            st.write("Columns:", df.columns.tolist())
+            st.write("Shape:", df.shape)
+            st.write("\nFirst few rows:")
+            st.write(df.head())
             
-        try:
-            cluster_col = df.iloc[:, df.columns.get_loc('Cluster')]
-            st.write("\nUsing get_loc:", cluster_col.head())
-        except Exception as e:
-            st.write("Error with get_loc:", str(e))
-        
-        return df
-        
+            return df
+            
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
+
 
 
 def load_models():
@@ -186,13 +213,19 @@ st.title('🍅🧀MyHealthMyFood🥑🥬')
 # Load data and models first
 df = load_data()
 if df is not None:
-    st.write("Data loaded successfully!")
-    st.write("Number of rows:", len(df))
-    st.write("Number of columns:", len(df.columns))
+    # Check if the necessary columns exist
+    required_columns = ['Cluster', 'FoodName', 'Calories', 'ProteinContent', 
+                       'FatContent', 'CarbohydrateContent', 'SodiumContent', 
+                       'CholesterolContent', 'SaturatedFatContent']
+                       
+    missing_columns = [col for col in required_columns if col not in df.columns]
     
-    # Display sample of the data
-    st.write("\nSample of loaded data:")
-    st.write(df.head())
+    if missing_columns:
+        st.error(f"Missing required columns: {missing_columns}")
+    else:
+        st.success("All required columns found!")
+        st.write("Data summary:")
+        st.write(df.describe())
 else:
     st.error("Failed to load data. Please check the error messages above.")
 
