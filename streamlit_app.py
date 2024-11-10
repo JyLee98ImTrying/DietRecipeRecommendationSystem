@@ -6,6 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 import gdown
+import io
 
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
@@ -14,62 +15,57 @@ st.cache_data.clear()
 def load_data():
     try:
         import requests
+        import io  # Add this import
         
         # Modify URL to force download
-        url = 'https://www.dropbox.com/scl/fi/gbvt3nv3y2ulfv9w33i1d/df_MFMH.csv?rlkey=2sxwr9b0koaks9td608wf155q&st=wkbtk99r&dl=1'
+        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
-        # Download the file content first
+        # Download the file content
         response = requests.get(url)
         if response.status_code != 200:
             st.error(f"Failed to download file: Status code {response.status_code}")
             return None
             
-        # Save content to a temporary string
-        content = response.content.decode('utf-8')
+        # Read CSV with specific handling for complex fields
+        df = pd.read_csv(
+            io.StringIO(response.content.decode('utf-8')),
+            delimiter=',',
+            encoding='utf-8',
+            on_bad_lines='skip',
+            quoting=1,  # Handle quoted fields
+            escapechar='\\',  # Handle escaped characters
+            doublequote=True  # Handle double quotes
+        )
         
-        # Debug: Show first few lines of raw content
-        st.write("First few lines of raw file content:")
-        st.text(content[:500])
+        # Clean up the Cluster column - ensure it's numeric
+        if 'Cluster' in df.columns:
+            # Strip any whitespace
+            df['Cluster'] = df['Cluster'].str.strip() if df['Cluster'].dtype == 'object' else df['Cluster']
+            # Convert to numeric
+            df['Cluster'] = pd.to_numeric(df['Cluster'], errors='coerce')
+            # Fill any NaN values
+            df['Cluster'] = df['Cluster'].fillna(1)  # Default to cluster 1 if conversion fails
+            # Convert to integer
+            df['Cluster'] = df['Cluster'].astype(int)
+            
+            st.write("Unique clusters found:", df['Cluster'].unique())
+            st.write("Cluster distribution:", df['Cluster'].value_counts())
+        else:
+            st.error("'Cluster' column not found. Available columns:", df.columns.tolist())
+            
+        # Display basic information about the loaded data
+        st.write("\nDataFrame Info:")
+        st.write(f"Shape: {df.shape}")
+        st.write("Columns:", df.columns.tolist())
+        st.write("\nFirst few rows:")
+        st.write(df.head())
         
-        # Try to read with different settings
-        try:
-            # First attempt: standard CSV reading
-            df = pd.read_csv(
-                io.StringIO(content),
-                delimiter=',',
-                encoding='utf-8',
-                on_bad_lines='skip',
-                engine='python'  # More flexible but slower engine
-            )
-        except Exception as e:
-            st.write(f"First attempt failed: {str(e)}")
-            try:
-                # Second attempt: with different encoding
-                df = pd.read_csv(
-                    io.StringIO(content),
-                    delimiter=',',
-                    encoding='latin1',
-                    on_bad_lines='skip',
-                    engine='python'
-                )
-            except Exception as e:
-                st.write(f"Second attempt failed: {str(e)}")
-                try:
-                    # Third attempt: try to detect delimiter
-                    import csv
-                    dialect = csv.Sniffer().sniff(content[:1024])
-                    st.write(f"Detected delimiter: {dialect.delimiter}")
-                    
-                    df = pd.read_csv(
-                        io.StringIO(content),
-                        delimiter=dialect.delimiter,
-                        encoding='utf-8',
-                        on_bad_lines='skip',
-                        engine='python'
-                    )
-                except Exception as e:
-                    st.write(f"Third attempt failed: {str(e)}")
-                    raise
+        return df
+        
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        st.write("Full error details:", e)
+        return None
 
       # If we successfully loaded the DataFrame
         if df is not None:
@@ -210,11 +206,9 @@ def recommend_food(input_data, df, models):
 # Streamlit UI
 st.title('🍅🧀MyHealthMyFood🥑🥬')
 
-# Load data and models first
-df = load_data()
 if df is not None:
     # Check if the necessary columns exist
-    required_columns = ['Cluster', 'FoodName', 'Calories', 'ProteinContent', 
+    required_columns = ['Cluster', 'Name', 'Calories', 'ProteinContent', 
                        'FatContent', 'CarbohydrateContent', 'SodiumContent', 
                        'CholesterolContent', 'SaturatedFatContent']
                        
@@ -224,8 +218,13 @@ if df is not None:
         st.error(f"Missing required columns: {missing_columns}")
     else:
         st.success("All required columns found!")
-        st.write("Data summary:")
-        st.write(df.describe())
+        
+        # Show summary statistics for nutritional columns
+        nutritional_cols = ['Calories', 'ProteinContent', 'FatContent', 
+                          'CarbohydrateContent', 'SodiumContent', 
+                          'CholesterolContent', 'SaturatedFatContent']
+        st.write("\nNutritional Information Summary:")
+        st.write(df[nutritional_cols].describe())
 else:
     st.error("Failed to load data. Please check the error messages above.")
 
