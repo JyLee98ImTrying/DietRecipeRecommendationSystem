@@ -13,41 +13,53 @@ st.cache_data.clear()
 
 def load_data():
     try:
-        # Modify Dropbox URL to get direct download link
+        # Convert Dropbox share link to direct download link
         url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
-        # Load the data with explicit dtype for Cluster column
-        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        # Load the data
+        df = pd.read_csv(url, delimiter=',', encoding='utf-8')
         
-        # Debug: Print column names and first few rows
-        st.write("Columns in dataset:", df.columns.tolist())
-        st.write("First few rows of data:")
-        st.write(df.head())
+        # Debug information
+        st.write("DataFrame Info:")
+        st.write(df.info())
         
-        # Ensure Cluster column exists and is properly formatted
+        st.write("\nColumn names (with lengths):")
+        for col in df.columns:
+            st.write(f"'{col}' - Length: {len(col)}")
+        
+        st.write("\nFirst few rows of 'Cluster' column (if exists):")
         if 'Cluster' in df.columns:
-            # Convert Cluster column to integer if it exists
-            df['Cluster'] = df['Cluster'].astype(int)
+            st.write(df['Cluster'].head())
         else:
-            st.error("Cluster column not found in the dataset")
-            # Check if it might be named differently (case sensitivity)
-            possible_cluster_cols = [col for col in df.columns if 'cluster' in col.lower()]
-            if possible_cluster_cols:
-                st.write("Found similar column names:", possible_cluster_cols)
+            # Check for similar column names
+            similar_cols = [col for col in df.columns if 'cluster' in col.lower()]
+            st.write("Columns containing 'cluster' (case-insensitive):", similar_cols)
+            
+            # Print all column names for debugging
+            st.write("\nAll column names:")
+            for idx, col in enumerate(df.columns):
+                st.write(f"{idx}. {col!r}")  # Using repr to show hidden characters
         
-        # Store in session state
-        st.session_state['df'] = df
-        
-        # Debug: Print unique clusters if column exists
-        if 'Cluster' in df.columns:
-            st.write("Unique clusters in dataset:", df['Cluster'].unique())
-            st.write("Cluster distribution:", df['Cluster'].value_counts())
+        # Try to load the column with different methods
+        try:
+            cluster_col = df.get('Cluster')
+            st.write("\nUsing df.get('Cluster'):", cluster_col is not None)
+        except Exception as e:
+            st.write("Error with df.get:", str(e))
+            
+        try:
+            cluster_col = df.iloc[:, df.columns.get_loc('Cluster')]
+            st.write("\nUsing get_loc:", cluster_col.head())
+        except Exception as e:
+            st.write("Error with get_loc:", str(e))
         
         return df
+        
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
+
 
 def load_models():
     try:
@@ -173,6 +185,17 @@ st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # Load data and models first
 df = load_data()
+if df is not None:
+    st.write("Data loaded successfully!")
+    st.write("Number of rows:", len(df))
+    st.write("Number of columns:", len(df.columns))
+    
+    # Display sample of the data
+    st.write("\nSample of loaded data:")
+    st.write(df.head())
+else:
+    st.error("Failed to load data. Please check the error messages above.")
+
 models = load_models()
 
 if df is not None and models is not None:
