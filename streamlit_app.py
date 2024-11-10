@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 def load_data():
     try:
         # Direct download link for Dropbox - ensure it's the direct download link
-        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?raw=1'  # Changed dl=1 to raw=1
+        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
         # Set up headers to mimic a browser request
         headers = {
