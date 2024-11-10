@@ -66,35 +66,52 @@ def calculate_caloric_needs(gender, weight, height, age):
         BMR = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
     return BMR
 
-# Modified recommend_food function with better error handling
 def recommend_food(input_data, df, models):
     try:
+        # Debug: Print input data
+        st.write("Input features:", input_data)
+        
         # Ensure input_data is 2D
         input_data_reshaped = input_data.reshape(1, -1)
         
         # Scale the input data
         input_data_scaled = models['scaler'].transform(input_data_reshaped)
         
+        # Debug: Print scaled input
+        st.write("Scaled input:", input_data_scaled)
+        
         # Get cluster prediction
         cluster_label = models['kmeans'].predict(input_data_scaled)[0]
+        st.write(f"Assigned cluster: {cluster_label}")
+        
+        # Debug: Print cluster distribution
+        cluster_dist = df['Cluster'].value_counts()
+        st.write("Cluster distribution in dataset:", cluster_dist)
         
         # Filter dataset
         cluster_data = df[df['Cluster'] == cluster_label].copy()
+        st.write(f"Number of items in selected cluster: {len(cluster_data)}")
         
         if cluster_data.empty:
-            st.warning("No matching foods found in the selected cluster.")
-            return pd.DataFrame()
+            # If no exact cluster match, take nearest cluster
+            unique_clusters = df['Cluster'].unique()
+            if len(unique_clusters) > 0:
+                # Get cluster centroids
+                cluster_centers = models['kmeans'].cluster_centers_
+                # Find nearest cluster
+                distances = cosine_similarity(input_data_scaled, cluster_centers)
+                nearest_cluster = unique_clusters[distances.argmax()]
+                st.write(f"No matches in original cluster. Using nearest cluster: {nearest_cluster}")
+                cluster_data = df[df['Cluster'] == nearest_cluster].copy()
+            else:
+                st.warning("No clusters found in the dataset.")
+                return pd.DataFrame()
         
         # Ensure feature columns exist
         required_columns = ['Calories', 'ProteinContent', 'FatContent', 
                           'CarbohydrateContent', 'SodiumContent', 
                           'CholesterolContent', 'SaturatedFatContent']
         
-        missing_columns = [col for col in required_columns if col not in cluster_data.columns]
-        if missing_columns:
-            st.error(f"Missing columns in dataset: {missing_columns}")
-            return pd.DataFrame()
-            
         # Scale features
         cluster_features = cluster_data[required_columns]
         cluster_features_scaled = models['scaler'].transform(cluster_features)
@@ -109,14 +126,23 @@ def recommend_food(input_data, df, models):
         rf_predictions = models['rf_classifier'].predict(cluster_features_scaled)
         cluster_data['Classification'] = rf_predictions
         
-        # Filter and return recommendations
-        final_recommendations = cluster_data[cluster_data['Classification'] == 1]
+        # Filter and sort by similarity
+        final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(
+            by='Similarity', ascending=False
+        )
+        
+        # If no recommendations after classification, return top similar items
+        if final_recommendations.empty:
+            st.warning("No items passed classification. Returning most similar items instead.")
+            final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
+        
         return final_recommendations[['FoodName', 'Calories', 'ProteinContent', 'FatContent', 
                                     'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
                                     'SaturatedFatContent', 'Similarity']].head(5)
                                     
     except Exception as e:
         st.error(f"Error in recommendation process: {str(e)}")
+        st.write("Full error details:", e)
         return pd.DataFrame()
 
 # Streamlit UI
@@ -139,26 +165,34 @@ if df is not None and models is not None:
         wellness_goal = st.selectbox("Select your wellness goal", 
                                    ["Maintain Weight", "Lose Weight", "Muscle Gain"])
     
-    if st.button("Get Recommendations"):
-        daily_calories = calculate_caloric_needs(gender, weight, height, age)
-        
-        # Create input data array
-        input_features = np.array([
-            daily_calories,  # Calories
-            0.8 * weight,    # Protein (default value)
-            0.25 * daily_calories,  # Fats (default value)
-            0.55 * daily_calories,  # Carbohydrates (default value)
-            2000,           # Sodium (default value)
-            200,            # Cholesterol (default value)
-            20             # SaturatedFats (default value)
-        ])
-        
-        recommendations = recommend_food(input_features, df, models)
-        
-        if not recommendations.empty:
-            st.write("Recommended food items:")
-            st.write(recommendations)
-        else:
-            st.warning("No recommendations found. Please try different inputs.")
-else:
-    st.error("Unable to load necessary data and models. Please check the file paths and try again.")
+if st.button("Get Recommendations"):
+    daily_calories = calculate_caloric_needs(gender, weight, height, age)
+    
+    # Adjust input features based on daily caloric needs
+    protein_grams = 0.8 * weight  # 0.8g per kg of body weight
+    fat_calories = 0.25 * daily_calories  # 25% of daily calories
+    carb_calories = 0.55 * daily_calories  # 55% of daily calories
+    
+    # Convert calories to grams for macronutrients
+    fat_grams = fat_calories / 9  # 9 calories per gram of fat
+    carb_grams = carb_calories / 4  # 4 calories per gram of carb
+    
+    # Create scaled-down input features for single meal recommendation
+    meal_fraction = 0.3  # Assuming this is for a single meal (30% of daily values)
+    input_features = np.array([
+        daily_calories * meal_fraction,  # Calories per meal
+        protein_grams * meal_fraction,   # Protein grams per meal
+        fat_grams * meal_fraction,       # Fat grams per meal
+        carb_grams * meal_fraction,      # Carb grams per meal
+        2000 * meal_fraction,            # Sodium (mg) per meal
+        200 * meal_fraction,             # Cholesterol (mg) per meal
+        (fat_grams * 0.3) * meal_fraction # Saturated fats (30% of total fats) per meal
+    ])
+    
+    recommendations = recommend_food(input_features, df, models)
+    
+    if not recommendations.empty:
+        st.write("Recommended food items:")
+        st.write(recommendations)
+    else:
+        st.warning("No recommendations found. Please try different inputs.")
