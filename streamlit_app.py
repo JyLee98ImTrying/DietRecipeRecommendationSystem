@@ -7,18 +7,23 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Function definitions
+import requests
+import io
+import pandas as pd
+import streamlit as st
+
 def load_data():
     try:
-        # Corrected Dropbox direct download link with `?dl=1`
+        # Correct Dropbox direct download link
         url = 'https://www.dropbox.com/s/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
         
-        # Set up headers to mimic a browser request
+        # Attempting download with follow redirects enabled
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        # Download the file content
-        response = requests.get(url, headers=headers)
+        # Requesting the file
+        response = requests.get(url, headers=headers, allow_redirects=True)
         
         # Debug information
         st.write("Response status code:", response.status_code)
@@ -27,27 +32,25 @@ def load_data():
         if response.status_code != 200:
             st.error(f"Failed to download file: Status code {response.status_code}")
             return None
-            
-        # Verify response content is CSV
+        
+        # Verifying we received CSV content
         content_type = response.headers.get('content-type', '').lower()
         if 'text/html' in content_type or '<!DOCTYPE' in response.text:
             st.error("Received HTML instead of CSV data. Please check the download URL.")
             return None
 
-        # Read CSV with specific handling for complex fields
+        # Parsing the CSV data
         try:
             df = pd.read_csv(io.BytesIO(response.content), delimiter=',', encoding='utf-8', on_bad_lines='skip')
             
-            # Display the first few rows and columns for debugging
+            # Debugging
             st.write("DataFrame head:", df.head())
             st.write("DataFrame columns:", df.columns.tolist())
             
-            # Clean up the Cluster column - ensure it's numeric
+            # Checking for and cleaning the 'Cluster' column if it exists
             if 'Cluster' in df.columns:
                 df['Cluster'] = df['Cluster'].str.strip() if df['Cluster'].dtype == 'object' else df['Cluster']
-                df['Cluster'] = pd.to_numeric(df['Cluster'], errors='coerce')
-                df['Cluster'] = df['Cluster'].fillna(1)
-                df['Cluster'] = df['Cluster'].astype(int)
+                df['Cluster'] = pd.to_numeric(df['Cluster'], errors='coerce').fillna(1).astype(int)
                 
                 st.write("Unique clusters found:", df['Cluster'].unique())
                 st.write("Cluster distribution:", df['Cluster'].value_counts())
@@ -56,7 +59,7 @@ def load_data():
                 return None
             
             return df
-            
+        
         except pd.errors.EmptyDataError:
             st.error("The CSV file appears to be empty.")
             return None
@@ -68,6 +71,7 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
+
 def load_models():
     try:
         model_files = {
