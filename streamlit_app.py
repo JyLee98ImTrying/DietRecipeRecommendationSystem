@@ -13,17 +13,8 @@ st.cache_data.clear()
 
 def load_data():
     try:
-        # Function to download CSV from Google Drive
-        def download_file_from_gdrive(file_id, output_file):
-            url = f'https://drive.google.com/uc?id={file_id}'
-            gdown.download(url, output_file, quiet=False)
-
-        file_id = '1SE7SF1RadmAX_mUEuZSWaXeTIg5Wh9x8'
-        csv_path = 'df_MHMF_1.csv'
-        download_file_from_gdrive(file_id, csv_path)
-        
-        df = pd.read_csv(csv_path, delimiter=',', encoding='utf-8', on_bad_lines='skip')
-        st.session_state['df'] = df
+        url='https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?rlkey=zbstokqcn4m4ahd0972kwt5or&st=4lkw8bcq&dl=0'
+        df = pd.read_csv(url)
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
