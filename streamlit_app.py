@@ -10,16 +10,28 @@ import gdown
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
 
-# Add error handling and logging
+
 def load_data():
     try:
-        # URL of the CSV file in the GitHub repository
-        url = 'https://github.com/JyLee98ImTrying/DietRecipeRecommendationSystem/blob/master/df_1_sample.csv'
+        # URL of the raw CSV file from GitHub
+        # Note: Use the raw GitHub URL instead of the repository page URL
+        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_1_sample.csv'
         
-        # Load the data directly from GitHub
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
         
-        # Store in session state for Streamlit
+        # Add clustering step here after loading the data
+        if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
+            # Get the features for clustering
+            features = df[['Calories', 'ProteinContent', 'FatContent', 
+                         'CarbohydrateContent', 'SodiumContent', 
+                         'CholesterolContent', 'SaturatedFatContent']]
+            
+            # Scale the features
+            scaled_features = st.session_state['models']['scaler'].transform(features)
+            
+            # Predict clusters
+            df['Cluster'] = st.session_state['models']['kmeans'].predict(scaled_features)
+        
         st.session_state['df'] = df
         return df
     except Exception as e:
@@ -38,7 +50,9 @@ def load_models():
         for name, file in model_files.items():
             with open(file, 'rb') as f:
                 models[name] = pickle.load(f)
-                st.write(f"{name} model loaded successfully.")
+        
+        # Store models in session state
+        st.session_state['models'] = models
         return models
     except Exception as e:
         st.error(f"Error loading models: {str(e)}")
