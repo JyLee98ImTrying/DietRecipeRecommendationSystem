@@ -14,7 +14,7 @@ st.cache_data.clear()
 def load_data():
     try:
         url='https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?rlkey=zbstokqcn4m4ahd0972kwt5or&st=4lkw8bcq&dl=0'
-        df = pd.read_csv(url)
+        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
