@@ -13,11 +13,21 @@ st.cache_data.clear()
 
 def load_data():
     try:
-        # URL of the raw CSV file from GitHub
-        # Note: Use the raw GitHub URL instead of the repository page URL
-        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_1_sample.csv'
+        # Function to download CSV from Google Drive
+        def download_file_from_gdrive(file_id, output_file):
+            url = f'https://drive.google.com/uc?id={file_id}'
+            gdown.download(url, output_file, quiet=False)
+
+        file_id = '1qle68mxmhtaF5NPBV1VregS-dz-Q9sDG'
+        csv_path = 'df_MHMF.csv'
+        download_file_from_gdrive(file_id, csv_path)
         
-        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        df = pd.read_csv(csv_path, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        st.session_state['df'] = df
+        return df
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        return None
         
         # Add clustering step here after loading the data
         if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
