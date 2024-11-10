@@ -13,16 +13,13 @@ st.cache_data.clear()
 # Add error handling and logging
 def load_data():
     try:
-        # Function to download CSV from Google Drive
-        def download_file_from_gdrive(file_id, output_file):
-            url = f'https://drive.google.com/uc?id={file_id}'
-            gdown.download(url, output_file, quiet=False)
-
-        file_id = '1qle68mxmhtaF5NPBV1VregS-dz-Q9sDG'
-        csv_path = 'df_MHMF.csv'
-        download_file_from_gdrive(file_id, csv_path)
+        # URL of the CSV file in the GitHub repository
+        url = 'https://github.com/JyLee98ImTrying/DietRecipeRecommendationSystem/blob/master/df_1_sample.csv'
         
-        df = pd.read_csv(csv_path, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        # Load the data directly from GitHub
+        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        
+        # Store in session state for Streamlit
         st.session_state['df'] = df
         return df
     except Exception as e:
