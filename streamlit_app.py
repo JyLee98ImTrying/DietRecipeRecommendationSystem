@@ -9,43 +9,77 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Function definitions
 def load_data():
     try:
-        # Modify URL to force download
-        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
+        # Direct download link for Dropbox - ensure it's the direct download link
+        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?raw=1'  # Changed dl=1 to raw=1
+        
+        # Set up headers to mimic a browser request
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         
         # Download the file content
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
+        
+        # Debug information
+        st.write("Response status code:", response.status_code)
+        st.write("Response content type:", response.headers.get('content-type', 'No content type'))
+        
         if response.status_code != 200:
             st.error(f"Failed to download file: Status code {response.status_code}")
             return None
             
-        # Read CSV with specific handling for complex fields
-        df = pd.read_csv(
-            io.StringIO(response.content.decode('utf-8')),
-            delimiter=',',
-            encoding='utf-8',
-            on_bad_lines='skip',
-            quoting=1,
-            escapechar='\\',
-            doublequote=True
-        )
-        
-        # Clean up the Cluster column - ensure it's numeric
-        if 'Cluster' in df.columns:
-            df['Cluster'] = df['Cluster'].str.strip() if df['Cluster'].dtype == 'object' else df['Cluster']
-            df['Cluster'] = pd.to_numeric(df['Cluster'], errors='coerce')
-            df['Cluster'] = df['Cluster'].fillna(1)
-            df['Cluster'] = df['Cluster'].astype(int)
+        # Check if we got HTML instead of CSV
+        content_type = response.headers.get('content-type', '').lower()
+        if 'text/html' in content_type:
+            st.error("Received HTML instead of CSV data. Please check the download URL.")
+            return None
             
-            st.write("Unique clusters found:", df['Cluster'].unique())
-            st.write("Cluster distribution:", df['Cluster'].value_counts())
-        else:
-            # Fixed error message combining both pieces of information
-            st.error(f"'Cluster' column not found. Available columns: {df.columns.tolist()}")
-        
-        return df
-        
+        # Try to read the first few bytes to check if it's CSV
+        try:
+            content_start = response.content[:100].decode('utf-8')
+            if '<!DOCTYPE' in content_start or '<html' in content_start:
+                st.error("Received HTML content instead of CSV data. Please verify the download URL.")
+                return None
+        except:
+            pass
+            
+        # Read CSV with specific handling for complex fields
+        try:
+            df = pd.read_csv(
+                io.BytesIO(response.content),
+                delimiter=',',
+                encoding='utf-8',
+                on_bad_lines='skip'
+            )
+            
+            # Display the first few rows and columns for debugging
+            st.write("DataFrame head:", df.head())
+            st.write("DataFrame columns:", df.columns.tolist())
+            
+            # Clean up the Cluster column - ensure it's numeric
+            if 'Cluster' in df.columns:
+                df['Cluster'] = df['Cluster'].str.strip() if df['Cluster'].dtype == 'object' else df['Cluster']
+                df['Cluster'] = pd.to_numeric(df['Cluster'], errors='coerce')
+                df['Cluster'] = df['Cluster'].fillna(1)
+                df['Cluster'] = df['Cluster'].astype(int)
+                
+                st.write("Unique clusters found:", df['Cluster'].unique())
+                st.write("Cluster distribution:", df['Cluster'].value_counts())
+            else:
+                st.error(f"'Cluster' column not found. Available columns: {df.columns.tolist()}")
+                st.error("Please ensure the CSV file contains the required 'Cluster' column.")
+                return None
+            
+            return df
+            
+        except pd.errors.EmptyDataError:
+            st.error("The CSV file appears to be empty.")
+            return None
+        except pd.errors.ParserError as e:
+            st.error(f"Error parsing CSV file: {str(e)}")
+            return None
+            
     except Exception as e:
-        # Fixed error message handling
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
