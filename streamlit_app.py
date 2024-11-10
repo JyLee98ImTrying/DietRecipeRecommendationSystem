@@ -13,30 +13,40 @@ st.cache_data.clear()
 
 def load_data():
     try:
-        url='https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?rlkey=zbstokqcn4m4ahd0972kwt5or&st=4lkw8bcq&dl=0'
+        # Modify Dropbox URL to get direct download link
+        url = 'https://www.dropbox.com/scl/fi/vasid7x99si4l40311m4q/df_MHMF.csv?dl=1'
+        
+        # Load the data with explicit dtype for Cluster column
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
-        return df
-    except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
-        return None
         
-        # Add clustering step here after loading the data
-        if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
-            # Get the features for clustering
-            features = df[['Calories', 'ProteinContent', 'FatContent', 
-                         'CarbohydrateContent', 'SodiumContent', 
-                         'CholesterolContent', 'SaturatedFatContent']]
-            
-            # Scale the features
-            scaled_features = st.session_state['models']['scaler'].transform(features)
-            
-            # Predict clusters
-            df['Cluster'] = st.session_state['models']['kmeans'].predict(scaled_features)
+        # Debug: Print column names and first few rows
+        st.write("Columns in dataset:", df.columns.tolist())
+        st.write("First few rows of data:")
+        st.write(df.head())
         
+        # Ensure Cluster column exists and is properly formatted
+        if 'Cluster' in df.columns:
+            # Convert Cluster column to integer if it exists
+            df['Cluster'] = df['Cluster'].astype(int)
+        else:
+            st.error("Cluster column not found in the dataset")
+            # Check if it might be named differently (case sensitivity)
+            possible_cluster_cols = [col for col in df.columns if 'cluster' in col.lower()]
+            if possible_cluster_cols:
+                st.write("Found similar column names:", possible_cluster_cols)
+        
+        # Store in session state
         st.session_state['df'] = df
+        
+        # Debug: Print unique clusters if column exists
+        if 'Cluster' in df.columns:
+            st.write("Unique clusters in dataset:", df['Cluster'].unique())
+            st.write("Cluster distribution:", df['Cluster'].value_counts())
+        
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
+        st.write("Full error details:", e)
         return None
 
 def load_models():
@@ -84,6 +94,18 @@ def recommend_food(input_data, df, models):
         # Get cluster prediction
         cluster_label = models['kmeans'].predict(input_data_scaled)[0]
         st.write(f"Assigned cluster: {cluster_label}")
+        
+        # Defensive check for Cluster column
+        if 'Cluster' not in df.columns:
+            st.error("Cluster column missing from DataFrame")
+            # Try to find the correct column name
+            cluster_cols = [col for col in df.columns if 'cluster' in col.lower()]
+            if cluster_cols:
+                st.write("Found potential cluster columns:", cluster_cols)
+                # Use the first matching column
+                df['Cluster'] = df[cluster_cols[0]]
+            else:
+                raise KeyError("No cluster column found in the dataset")
         
         # Debug: Print cluster distribution
         cluster_dist = df['Cluster'].value_counts()
