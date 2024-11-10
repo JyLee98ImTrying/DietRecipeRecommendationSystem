@@ -39,11 +39,13 @@ def load_data():
             st.write("Unique clusters found:", df['Cluster'].unique())
             st.write("Cluster distribution:", df['Cluster'].value_counts())
         else:
-            st.error("'Cluster' column not found. Available columns:", df.columns.tolist())
+            # Fixed error message combining both pieces of information
+            st.error(f"'Cluster' column not found. Available columns: {df.columns.tolist()}")
         
         return df
         
     except Exception as e:
+        # Fixed error message handling
         st.error(f"Error loading data: {str(e)}")
         st.write("Full error details:", e)
         return None
@@ -64,7 +66,6 @@ def load_models():
     except Exception as e:
         st.error(f"Error loading models: {str(e)}")
         return None
-
 
 # Function to calculate daily caloric needs
 def calculate_caloric_needs(gender, weight, height, age):
@@ -173,34 +174,34 @@ if df is not None and models is not None:
         wellness_goal = st.selectbox("Select your wellness goal", 
                                    ["Maintain Weight", "Lose Weight", "Muscle Gain"])
     
-if st.button("Get Recommendations"):
-    daily_calories = calculate_caloric_needs(gender, weight, height, age)
-    
-    # Adjust input features based on daily caloric needs
-    protein_grams = 0.8 * weight  # 0.8g per kg of body weight
-    fat_calories = 0.25 * daily_calories  # 25% of daily calories
-    carb_calories = 0.55 * daily_calories  # 55% of daily calories
-    
-    # Convert calories to grams for macronutrients
-    fat_grams = fat_calories / 9  # 9 calories per gram of fat
-    carb_grams = carb_calories / 4  # 4 calories per gram of carb
-    
-    # Create scaled-down input features for single meal recommendation
-    meal_fraction = 0.3  # Assuming this is for a single meal (30% of daily values)
-    input_features = np.array([
-        daily_calories * meal_fraction,  # Calories per meal
-        protein_grams * meal_fraction,   # Protein grams per meal
-        fat_grams * meal_fraction,       # Fat grams per meal
-        carb_grams * meal_fraction,      # Carb grams per meal
-        2000 * meal_fraction,            # Sodium (mg) per meal
-        200 * meal_fraction,             # Cholesterol (mg) per meal
-        (fat_grams * 0.3) * meal_fraction # Saturated fats (30% of total fats) per meal
-    ])
-    
-    recommendations = recommend_food(input_features, df, models)
-    
-    if not recommendations.empty:
-        st.write("Recommended food items:")
-        st.write(recommendations)
-    else:
-        st.warning("No recommendations found. Please try different inputs.")
+    if st.button("Get Recommendations"):
+        daily_calories = calculate_caloric_needs(gender, weight, height, age)
+        
+        # Adjust input features based on daily caloric needs
+        protein_grams = 0.8 * weight  # 0.8g per kg of body weight
+        fat_calories = 0.25 * daily_calories  # 25% of daily calories
+        carb_calories = 0.55 * daily_calories  # 55% of daily calories
+        
+        # Convert calories to grams for macronutrients
+        fat_grams = fat_calories / 9  # 9 calories per gram of fat
+        carb_grams = carb_calories / 4  # 4 calories per gram of carb
+        
+        # Create scaled-down input features for single meal recommendation
+        meal_fraction = 0.3  # Assuming this is for a single meal (30% of daily values)
+        input_features = np.array([
+            daily_calories * meal_fraction,  # Calories per meal
+            protein_grams * meal_fraction,   # Protein grams per meal
+            fat_grams * meal_fraction,       # Fat grams per meal
+            carb_grams * meal_fraction,      # Carb grams per meal
+            2000 * meal_fraction,            # Sodium (mg) per meal
+            200 * meal_fraction,             # Cholesterol (mg) per meal
+            (fat_grams * 0.3) * meal_fraction # Saturated fats (30% of total fats) per meal
+        ])
+        
+        recommendations = recommend_food(input_features, df, models)
+        
+        if not recommendations.empty:
+            st.write("Recommended food items:")
+            st.write(recommendations)
+        else:
+            st.warning("No recommendations found. Please try different inputs.")
