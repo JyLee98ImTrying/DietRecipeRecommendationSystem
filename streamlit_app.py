@@ -18,8 +18,8 @@ def load_data():
             url = f'https://drive.google.com/uc?id={file_id}'
             gdown.download(url, output_file, quiet=False)
 
-        file_id = '1qle68mxmhtaF5NPBV1VregS-dz-Q9sDG'
-        csv_path = 'df_MHMF.csv'
+        file_id = '1SE7SF1RadmAX_mUEuZSWaXeTIg5Wh9x8'
+        csv_path = 'df_MHMF_1.csv'
         download_file_from_gdrive(file_id, csv_path)
         
         df = pd.read_csv(csv_path, delimiter=',', encoding='utf-8', on_bad_lines='skip')
