@@ -44,89 +44,69 @@ def recommend_food(input_data, df, models):
     try:
         # Debug: Print input data
         st.write("Input features:", input_data)
-        
+
         # Ensure input_data is 2D
         input_data_reshaped = input_data.reshape(1, -1)
-        
+
         # Scale the input data
         input_data_scaled = models['scaler'].transform(input_data_reshaped)
-        
+
         # Debug: Print scaled input
         st.write("Scaled input:", input_data_scaled)
-        
-       # Get cluster prediction
+
+        # Get cluster prediction
         cluster_label = models['kmeans'].predict(input_data_scaled)[0]
         st.write(f"Assigned cluster: {cluster_label}")
 
+        # Debug: Print column names
+        print(df.columns)
 
-        
         # Debug: Print cluster distribution
-        cluster_dist = df['Cluster'].value_counts()
-        st.write("Cluster distribution in dataset:", cluster_dist)
-        
-        # Filter dataset
-        cluster_data = df[df['Cluster'] == cluster_label].copy()
-        st.write(f"Number of items in selected cluster: {len(cluster_data)}")
+        if 'Cluster' in df.columns:
+            cluster_dist = df['Cluster'].value_counts()
+            st.write("Cluster distribution in dataset:", cluster_dist)
+        else:
+            st.warning("The 'Cluster' column is not found in the DataFrame.")
 
+        # Filter dataset
         if 'Cluster' in df.columns:
             cluster_data = df[df['Cluster'] == cluster_label].copy()
+            st.write(f"Number of items in selected cluster: {len(cluster_data)}")
         else:
             st.warning("The 'Cluster' column is not found in the DataFrame.")
             return pd.DataFrame()
-        
-        if cluster_data.empty:
-            # If no exact cluster match, take nearest cluster
-            unique_clusters = df['Cluster'].unique()
-            if len(unique_clusters) > 0:
-                # Get cluster centroids
-                cluster_centers = models['kmeans'].cluster_centers_
-                # Find nearest cluster
-                distances = cosine_similarity(input_data_scaled, cluster_centers)
-                nearest_cluster = unique_clusters[distances.argmax()]
-                st.write(f"No matches in original cluster. Using nearest cluster: {nearest_cluster}")
-                cluster_data = df[df['Cluster'] == nearest_cluster].copy()
-            else:
-                st.warning("No clusters found in the dataset.")
-                return pd.DataFrame()
-        
+
         # Ensure feature columns exist
-        required_columns = ['Calories', 'ProteinContent', 'FatContent', 
-                          'CarbohydrateContent', 'SodiumContent', 
-                          'CholesterolContent', 'SaturatedFatContent']
-        
+        required_columns = ['Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 'SaturatedFatContent']
+
         # Scale features
         cluster_features = cluster_data[required_columns]
         cluster_features_scaled = models['scaler'].transform(cluster_features)
-        
+
         # Calculate similarities
         similarities = cosine_similarity(input_data_scaled, cluster_features_scaled).flatten()
-        
+
         # Add similarity scores and sort
         cluster_data['Similarity'] = similarities
-        
+
         # Get RF predictions
         rf_predictions = models['rf_classifier'].predict(cluster_features_scaled)
         cluster_data['Classification'] = rf_predictions
-        
+
         # Filter and sort by similarity
-        final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(
-            by='Similarity', ascending=False
-        )
-        
+        final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(by='Similarity', ascending=False)
+
         # If no recommendations after classification, return top similar items
         if final_recommendations.empty:
             st.warning("No items passed classification. Returning most similar items instead.")
             final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
-        
-        return final_recommendations[['FoodName', 'Calories', 'ProteinContent', 'FatContent', 
-                                    'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
-                                    'SaturatedFatContent', 'Similarity']].head(5)
-                                    
+
+        return final_recommendations[['Name', 'Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 'SaturatedFatContent', 'Similarity']].head(5)
+
     except Exception as e:
         st.error(f"Error in recommendation process: {str(e)}")
         st.write("Full error details:", e)
         return pd.DataFrame()
-
 
 # Streamlit UI
 st.title('🍅🧀MyHealthMyFood🥑🥬')
