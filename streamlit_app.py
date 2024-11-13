@@ -147,12 +147,12 @@ if df is not None:
     st.write(df.head())
 else:
     st.error("Failed to load dataset")
-    return
+return
         
 models = load_models()
 if models is None:
     st.error("Failed to load models")
-    return
+return
 
 if df is not None and models is not None:
     # User inputs
