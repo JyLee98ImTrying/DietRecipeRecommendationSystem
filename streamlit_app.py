@@ -153,15 +153,15 @@ class StreamlitUI:
         weight = st.number_input("Enter your weight (kg)", 
                                min_value=self.config.MIN_WEIGHT,
                                max_value=self.config.MAX_WEIGHT, 
-                               value=200)
+                               value=30)
         height = st.number_input("Enter your height (cm)", 
                                min_value=self.config.MIN_HEIGHT,
                                max_value=self.config.MAX_HEIGHT, 
-                               value=220)
+                               value=120)
         age = st.number_input("Enter your age (years)", 
                             min_value=self.config.MIN_AGE,
                             max_value=self.config.MAX_AGE, 
-                            value=100)
+                            value=18)
         
         health_condition = st.selectbox(
             "Select your health condition",
