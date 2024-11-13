@@ -10,10 +10,11 @@ from pathlib import Path
 # Load the dataset
 def load_dataset():
     try:
-        # For Streamlit Cloud, use the direct path
-        df = pd.read_csv('df_DR.csv', 
-                        dtype={'Cluster': float}, 
-                        encoding='utf-8')
+        # Debug: Print current directory and files
+        st.write("Current directory contents:", os.listdir())
+        
+        # Load the dataset
+        df = pd.read_csv('df_DR.csv')
         
         # Debug information
         st.write("DataFrame loaded successfully")
@@ -23,9 +24,6 @@ def load_dataset():
         return df
     except Exception as e:
         st.error(f"Error loading dataset: {str(e)}")
-        # Debug information
-        st.write("Current working directory:", os.getcwd())
-        st.write("Files in directory:", os.listdir())
         return None
 
 
