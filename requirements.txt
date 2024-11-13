@@ -1,0 +1,7 @@
+streamlit
+joblib
+pickle
+pandas
+numpy
+scikit-learn
+git+https://github.com/git-lfs.git
