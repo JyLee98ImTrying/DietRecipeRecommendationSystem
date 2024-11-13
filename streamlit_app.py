@@ -54,7 +54,6 @@ def load_models():
         st.error(f"Error loading models: {str(e)}")
         return None
 
-# Function to calculate daily caloric needs
 def calculate_caloric_needs(gender, weight, height, age):
     if gender == "Female":
         BMR = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
