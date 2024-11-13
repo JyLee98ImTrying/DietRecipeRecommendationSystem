@@ -10,10 +10,7 @@ def load_data():
     try:
         # Load the dataset from the URL
         url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
-        df = pd.read_csv(url, header=0, encoding='utf-8', on_bad_lines='skip')
-
-        # Print the first few rows to understand its structure
-        print(df.head())
+        df = pd.read_csv(url, header=1, encoding='utf-8', on_bad_lines='skip')
 
         # Print column names to debug
         st.write("Columns in the dataset:", df.columns)  # Print columns
