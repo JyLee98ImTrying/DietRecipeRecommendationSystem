@@ -54,9 +54,11 @@ def recommend_food(input_data, df, models):
         # Debug: Print scaled input
         st.write("Scaled input:", input_data_scaled)
         
-        # Get cluster prediction
+       # Get cluster prediction
         cluster_label = models['kmeans'].predict(input_data_scaled)[0]
         st.write(f"Assigned cluster: {cluster_label}")
+
+
         
         # Debug: Print cluster distribution
         cluster_dist = df['Cluster'].value_counts()
@@ -65,6 +67,12 @@ def recommend_food(input_data, df, models):
         # Filter dataset
         cluster_data = df[df['Cluster'] == cluster_label].copy()
         st.write(f"Number of items in selected cluster: {len(cluster_data)}")
+
+        if 'Cluster' in df.columns:
+            cluster_data = df[df['Cluster'] == cluster_label].copy()
+        else:
+            st.warning("The 'Cluster' column is not found in the DataFrame.")
+            return pd.DataFrame()
         
         if cluster_data.empty:
             # If no exact cluster match, take nearest cluster
