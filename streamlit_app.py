@@ -7,9 +7,7 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the dataset
-url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
-        
-df = pd.read_csv(url, header=1, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+df = pd.read_csv('df_DR.csv')
 
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
@@ -54,7 +52,7 @@ def recommend_food(input_data, df, models):
         cluster_label = models['kmeans'].predict(input_data_scaled)[0]
         
         # Filter dataset
-        cluster_data = df[df['Cluster'] == cluster_label].copy()
+        cluster_data = df[df['Cluster'] == str(cluster_label)].copy()
         
         if cluster_data.empty:
             # If no exact cluster match, take nearest cluster
@@ -64,7 +62,7 @@ def recommend_food(input_data, df, models):
                 cluster_centers = models['kmeans'].cluster_centers_
                 # Find nearest cluster
                 distances = cosine_similarity(input_data_scaled, cluster_centers)
-                nearest_cluster = unique_clusters[distances.argmax()]
+                nearest_cluster = str(unique_clusters[distances.argmax()])
                 cluster_data = df[df['Cluster'] == nearest_cluster].copy()
             else:
                 st.warning("No clusters found in the dataset.")
@@ -99,10 +97,9 @@ def recommend_food(input_data, df, models):
             st.warning("No items passed classification. Returning most similar items instead.")
             final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
         
-        return final_recommendations[['Name', 'RecipeCategory', 'Calories', 'ProteinContent', 'FatContent', 
+        return final_recommendations[['Name', 'Calories', 'ProteinContent', 'FatContent', 
                                     'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
-                                    'SaturatedFatContent', 'FiberContent','SugarContent','RecipeYield', 'RecipeInstructions', 
-                                    'Similarity']].head(5)
+                                    'SaturatedFatContent', 'Similarity']].head(5)
                                     
     except Exception as e:
         st.error(f"Error in recommendation process: {str(e)}")
