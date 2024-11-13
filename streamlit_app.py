@@ -16,7 +16,7 @@ def load_data():
         # Note: Use the raw GitHub URL instead of the repository page URL
         url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
         
-        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+        df = pd.read_csv(url, header=1, delimiter=',', encoding='utf-8', on_bad_lines='skip')
         
         # Add clustering step here after loading the data
         if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
