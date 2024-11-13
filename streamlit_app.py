@@ -97,9 +97,10 @@ def recommend_food(input_data, df, models):
             st.warning("No items passed classification. Returning most similar items instead.")
             final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
         
-        return final_recommendations[['Name', 'Calories', 'ProteinContent', 'FatContent', 
+        return final_recommendations[['Name', 'RecipeCategory', 'Calories', 'ProteinContent', 'FatContent', 
                                     'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
-                                    'SaturatedFatContent', 'Similarity']].head(5)
+                                    'SaturatedFatContent', 'FiberContent','SugarContent','RecipeYield', 'RecipeInstructions', 
+                                    'Similarity']].head(5)
                                     
     except Exception as e:
         st.error(f"Error in recommendation process: {str(e)}")
