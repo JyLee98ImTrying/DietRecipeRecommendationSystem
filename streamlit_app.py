@@ -8,29 +8,30 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def load_data():
     try:
-        # Load the dataset from the URL
+        # URL of the raw CSV file from GitHub
         url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
-        df = pd.read_csv(url, header=1, encoding='utf-8', on_bad_lines='skip')
+        
+        # Load the data with proper encoding and handling of quotes
+        df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip', quotechar='"')
 
-        # Print column names to debug
-        st.write("Columns in the dataset:", df.columns)  # Print columns
+        # Check the column names and first few rows
+        print("Columns in dataset:", df.columns)
+        print(df.head())
 
-        # List of expected columns
-        required_columns = ['Calories', 'ProteinContent', 'FatContent', 
-                            'CarbohydrateContent', 'SodiumContent', 
-                            'CholesterolContent', 'SaturatedFatContent']
-
-        # Check if all required columns are present
+        # Check if the columns of interest are loaded correctly
+        required_columns = ['Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent', 
+                            'SodiumContent', 'CholesterolContent', 'SaturatedFatContent']
+        
         missing_columns = [col for col in required_columns if col not in df.columns]
+        
         if missing_columns:
-            st.error(f"Missing columns: {', '.join(missing_columns)}")
-            return None
+            raise ValueError(f"Missing columns: {', '.join(missing_columns)}")
 
         return df
-    except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
-        return None
 
+    except Exception as e:
+        print(f"Error loading data: {str(e)}")
+        return None
 
 
 def load_models():
