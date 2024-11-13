@@ -44,11 +44,14 @@ def calculate_caloric_needs(gender, weight, height, age):
 def recommend_food(input_data, df, models):
     try:
         # Debug: Print DataFrame info
-        st.write("DataFrame Info:")
-        st.write(df.info())
+        st.write("DataFrame shape:", df.shape)
+        st.write("DataFrame dtypes:", df.dtypes)
+        st.write("First few rows:")
+        st.write(df.head())
         
-        st.write("DataFrame Columns:")
-        st.write(list(df.columns))
+        if df is None or df.empty:
+            st.error("DataFrame is empty or None")
+            return pd.DataFrame()
 
         
         # Debug: Print input data
