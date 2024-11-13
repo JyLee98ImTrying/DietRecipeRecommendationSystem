@@ -5,11 +5,18 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
+from pathlib import path
+import os
 
 # Load the dataset
-df = pd.read_csv('df_DR.csv', 
+file_path = Path(__file__).parent / 'df_DR.csv'
+df = pd.read_csv(file_path, 
                  dtype={'Cluster': float}, 
                  encoding='utf-8')
+
+st.write("Current working directory:", os.getcwd())
+st.write("Files in current directory:", os.listdir())
+
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
 
