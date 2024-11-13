@@ -58,38 +58,20 @@ class Config:
 class DataLoader:
     @staticmethod
     @st.cache_data
-    def load_dataset() -> Optional[pd.DataFrame]:
-        """Load and cache the dataset from S3."""
-        try:
-            # Download the CSV file from S3 using the helper function
-            local_csv_path = download_csv_from_s3()
-            
-            # Read the downloaded CSV file
-            df = pd.read_csv(local_csv_path)
-            
-            # Debug information
-            st.write("Dataset loaded successfully from S3")
-            st.write(f"Original shape: {df.shape}")
-            st.write("Columns:", list(df.columns))
-            
-            # Basic data validation
-            required_columns = [
-                'Name', 'Calories', 'ProteinContent', 'FatContent', 
-                'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
-                'SaturatedFatContent', 'Cluster'
-            ]
-            
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                st.error(f"Missing required columns: {missing_columns}")
-                return None
-                
-            return df
-            
-        except Exception as e:
-            st.error(f"Error loading dataset from S3: {str(e)}")
+   def load_dataset() -> Optional[pd.DataFrame]:
+    """Load and cache the dataset from S3."""
+    try:
+        # Skip caching to debug the issue
+        local_csv_path = download_csv_from_s3()
+        if local_csv_path is None:
             return None
-
+        
+        # Read the downloaded CSV file
+        df = pd.read_csv(local_csv_path)
+        return df
+    except Exception as e:
+        st.error(f"Error loading dataset from S3: {str(e)}")
+        return None
     @staticmethod
     def load_models() -> Optional[Dict[str, Any]]:
         """Load all required models."""
