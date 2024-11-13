@@ -9,13 +9,26 @@ from pathlib import Path
 import os
 
 # Load the dataset
-file_path = Path(__file__).parent / 'df_DR.csv'
-df = pd.read_csv(file_path, 
-                 dtype={'Cluster': float}, 
-                 encoding='utf-8')
+def load_dataset():
+    try:
+        # For Streamlit Cloud, use the direct path
+        df = pd.read_csv('df_DR.csv', 
+                        dtype={'Cluster': float}, 
+                        encoding='utf-8')
+        
+        # Debug information
+        st.write("DataFrame loaded successfully")
+        st.write("Shape:", df.shape)
+        st.write("Columns:", list(df.columns))
+        
+        return df
+    except Exception as e:
+        st.error(f"Error loading dataset: {str(e)}")
+        # Debug information
+        st.write("Current working directory:", os.getcwd())
+        st.write("Files in directory:", os.listdir())
+        return None
 
-st.write("Current working directory:", os.getcwd())
-st.write("Files in current directory:", os.listdir())
 
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
