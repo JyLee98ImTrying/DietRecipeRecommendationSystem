@@ -142,17 +142,17 @@ st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # Load data and models first
 df = load_dataset()
-    if df is not None:
-        st.write("Dataset preview:")
-        st.write(df.head())
-    else:
-        st.error("Failed to load dataset")
-        return
+if df is not None:
+    st.write("Dataset preview:")
+    st.write(df.head())
+else:
+    st.error("Failed to load dataset")
+    return
         
-    models = load_models()
-    if models is None:
-        st.error("Failed to load models")
-        return
+models = load_models()
+if models is None:
+    st.error("Failed to load models")
+    return
 
 if df is not None and models is not None:
     # User inputs
