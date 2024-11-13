@@ -7,7 +7,9 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the dataset
-df = pd.read_csv('df_DR.csv')
+url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
+        
+df = pd.read_csv(url, header=1, delimiter=',', encoding='utf-8', on_bad_lines='skip')
 
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
