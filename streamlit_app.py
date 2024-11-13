@@ -72,7 +72,7 @@ def recommend_food(input_data, df, models):
 
         # Debug: Print cluster distribution
         if 'Cluster' in df.columns:
-            df['Cluster']=pd.to_numeric(df['Cluster'], errors="coerce')
+            df['Cluster']=pd.to_numeric(df['Cluster'], errors='coerce')
             cluster_dist = df['Cluster'].value_counts()
             st.write("Cluster distribution in dataset:", cluster_dist)
         else:
