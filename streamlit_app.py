@@ -148,6 +148,13 @@ st.title('🍅🧀MyHealthMyFood🥑🥬')
 df = load_data()
 models = load_models()
 
+def calculate_caloric_needs(gender, weight, height, age):
+    if gender == "Female":
+        BMR = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+    else:
+        BMR = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
+    return BMR
+
 if df is not None and models is not None:
     # User inputs
     gender = st.selectbox("Select your gender", ["Female", "Male"])
