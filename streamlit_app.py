@@ -6,15 +6,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Clear cache to ensure fresh data loading
-st.cache_data.clear()
-
-
 def load_data():
     try:
         # URL of the raw CSV file from GitHub
         # Note: Use the raw GitHub URL instead of the repository page URL
-        url = 'https://github.com/JyLee98ImTrying/DietRecipeRecommendationSystem/blob/master/df_DR.csv'
+        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
         
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
 
