@@ -32,24 +32,22 @@ st.cache_data.clear()
 
 def load_models():
     try:
-        model_files = {
-            'kmeans': 'kmeans.pkl',
-            'rf_classifier': 'rf_classifier.pkl',
-            'scaler': 'scaler.pkl'
-        }
-        
         models = {}
-        for name, file in model_files.items():
-            with open(file, 'rb') as f:
-                models[name] = pickle.load(f)
+        model_files = ['kmeans.pkl', 'rf_classifier.pkl', 'scaler.pkl']
         
-        # Store models in session state
-        st.session_state['models'] = models
+        for file in model_files:
+            with open(file, 'rb') as f:
+                model_name = file.replace('.pkl', '')
+                models[model_name] = pickle.load(f)
+        
+        st.success("Models loaded successfully")
         return models
     except Exception as e:
         st.error(f"Error loading models: {str(e)}")
+        st.write("Current directory:", os.getcwd())
+        st.write("Files available:", os.listdir())
         return None
-
+        
 # Function to calculate daily caloric needs
 def calculate_caloric_needs(gender, weight, height, age):
     if gender == "Female":
@@ -143,8 +141,18 @@ def recommend_food(input_data, df, models):
 st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # Load data and models first
-df = pd.read_csv('df_DR.csv')
-models = load_models()
+ df = load_dataset()
+    if df is not None:
+        st.write("Dataset preview:")
+        st.write(df.head())
+    else:
+        st.error("Failed to load dataset")
+        return
+        
+    models = load_models()
+    if models is None:
+        st.error("Failed to load models")
+        return
 
 if df is not None and models is not None:
     # User inputs
