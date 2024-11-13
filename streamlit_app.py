@@ -7,8 +7,9 @@ import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the dataset
-df = pd.read_csv('df_DR.csv')
-
+df = pd.read_csv('df_DR.csv', 
+                 dtype={'Cluster': float}, 
+                 encoding='utf-8')
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
 
@@ -42,6 +43,14 @@ def calculate_caloric_needs(gender, weight, height, age):
 
 def recommend_food(input_data, df, models):
     try:
+        # Debug: Print DataFrame info
+        st.write("DataFrame Info:")
+        st.write(df.info())
+        
+        st.write("DataFrame Columns:")
+        st.write(list(df.columns))
+
+        
         # Debug: Print input data
         st.write("Input features:", input_data)
 
