@@ -1,200 +1,200 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import joblib
-from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
+import os
 from sklearn.metrics.pairwise import cosine_similarity
-from pathlib import Path
+from dataclasses import dataclass
+from typing import Dict, Optional, List, Any
 
-# Load the dataset
-def load_dataset():
-    try:
-        # Debug: Print current directory and files
-        st.write("Current directory contents:", os.listdir())
-        
-        # Load the dataset
-        df = pd.read_csv('df_DR.csv')
-        
-        # Debug information
-        st.write("DataFrame loaded successfully")
-        st.write("Shape:", df.shape)
-        st.write("Columns:", list(df.columns))
-        
-        return df
-    except Exception as e:
-        st.error(f"Error loading dataset: {str(e)}")
-        return None
+# Configuration and Constants
+@dataclass
+class Config:
+    MIN_WEIGHT: int = 30
+    MAX_WEIGHT: int = 200
+    MIN_HEIGHT: int = 100
+    MAX_HEIGHT: int = 250
+    MIN_AGE: int = 1
+    MAX_AGE: int = 100
+    MEAL_FRACTION: float = 0.3
+    DEFAULT_SODIUM: int = 2000
+    DEFAULT_CHOLESTEROL: int = 200
+    SAT_FAT_RATIO: float = 0.3
+    PROTEIN_PER_KG: float = 0.8
+    FAT_CALORIES_RATIO: float = 0.25
+    CARB_CALORIES_RATIO: float = 0.55
+    FAT_CALORIES_PER_GRAM: int = 9
+    CARB_CALORIES_PER_GRAM: int = 4
 
+class DataLoader:
+    @staticmethod
+    @st.cache_data
+    def load_dataset() -> Optional[pd.DataFrame]:
+        """Load and cache the dataset."""
+        try:
+            df = pd.read_csv('df_DR.csv')
+            return df
+        except Exception as e:
+            st.error(f"Error loading dataset: {str(e)}")
+            return None
 
-# Clear cache to ensure fresh data loading
-st.cache_data.clear()
+    @staticmethod
+    def load_models() -> Optional[Dict[str, Any]]:
+        """Load all required models."""
+        try:
+            models = {}
+            model_files = ['kmeans.pkl', 'rf_classifier.pkl', 'scaler.pkl']
+            
+            for file in model_files:
+                with open(file, 'rb') as f:
+                    model_name = file.replace('.pkl', '')
+                    models[model_name] = pickle.load(f)
+            
+            return models
+        except Exception as e:
+            st.error(f"Error loading models: {str(e)}")
+            st.write("Current directory:", os.getcwd())
+            st.write("Files available:", os.listdir())
+            return None
 
-def load_models():
-    try:
-        models = {}
-        model_files = ['kmeans.pkl', 'rf_classifier.pkl', 'scaler.pkl']
-        
-        for file in model_files:
-            with open(file, 'rb') as f:
-                model_name = file.replace('.pkl', '')
-                models[model_name] = pickle.load(f)
-        
-        st.success("Models loaded successfully")
-        return models
-    except Exception as e:
-        st.error(f"Error loading models: {str(e)}")
-        st.write("Current directory:", os.getcwd())
-        st.write("Files available:", os.listdir())
-        return None
-        
-# Function to calculate daily caloric needs
-def calculate_caloric_needs(gender, weight, height, age):
-    if gender == "Female":
-        BMR = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
-    else:
-        BMR = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
-    return BMR
+class NutritionCalculator:
+    @staticmethod
+    def calculate_bmr(gender: str, weight: float, height: float, age: int) -> float:
+        """Calculate Basal Metabolic Rate."""
+        if gender == "Female":
+            return 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+        return 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
 
-def recommend_food(input_data, df, models):
-    try:
-        # Debug: Print DataFrame info
-        st.write("DataFrame shape:", df.shape)
-        st.write("DataFrame dtypes:", df.dtypes)
-        st.write("First few rows:")
-        st.write(df.head())
+    @staticmethod
+    def calculate_macronutrients(weight: float, daily_calories: float, config: Config) -> np.ndarray:
+        """Calculate macronutrient requirements for a meal."""
+        protein_grams = config.PROTEIN_PER_KG * weight
+        fat_calories = config.FAT_CALORIES_RATIO * daily_calories
+        carb_calories = config.CARB_CALORIES_RATIO * daily_calories
         
-        if df is None or df.empty:
-            st.error("DataFrame is empty or None")
+        fat_grams = fat_calories / config.FAT_CALORIES_PER_GRAM
+        carb_grams = carb_calories / config.CARB_CALORIES_PER_GRAM
+        
+        return np.array([
+            daily_calories * config.MEAL_FRACTION,
+            protein_grams * config.MEAL_FRACTION,
+            fat_grams * config.MEAL_FRACTION,
+            carb_grams * config.MEAL_FRACTION,
+            config.DEFAULT_SODIUM * config.MEAL_FRACTION,
+            config.DEFAULT_CHOLESTEROL * config.MEAL_FRACTION,
+            (fat_grams * config.SAT_FAT_RATIO) * config.MEAL_FRACTION
+        ])
+
+class FoodRecommender:
+    def __init__(self, df: pd.DataFrame, models: Dict[str, Any]):
+        self.df = df
+        self.models = models
+        self.required_columns = [
+            'Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent',
+            'SodiumContent', 'CholesterolContent', 'SaturatedFatContent'
+        ]
+
+    def get_recommendations(self, input_data: np.ndarray) -> pd.DataFrame:
+        """Generate food recommendations based on input data."""
+        try:
+            input_data_reshaped = input_data.reshape(1, -1)
+            input_data_scaled = self.models['scaler'].transform(input_data_reshaped)
+            cluster_label = self.models['kmeans'].predict(input_data_scaled)[0]
+
+            # Filter by cluster
+            cluster_data = self.df[self.df['Cluster'] == cluster_label].copy()
+            
+            if cluster_data.empty:
+                return pd.DataFrame()
+
+            # Scale features and calculate similarities
+            cluster_features = cluster_data[self.required_columns]
+            cluster_features_scaled = self.models['scaler'].transform(cluster_features)
+            similarities = cosine_similarity(input_data_scaled, cluster_features_scaled).flatten()
+            
+            # Add similarity scores and predictions
+            cluster_data['Similarity'] = similarities
+            rf_predictions = self.models['rf_classifier'].predict(cluster_features_scaled)
+            cluster_data['Classification'] = rf_predictions
+
+            # Get final recommendations
+            final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(
+                by='Similarity', ascending=False
+            )
+
+            if final_recommendations.empty:
+                final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
+
+            return final_recommendations[
+                ['Name'] + self.required_columns + ['Similarity']
+            ].head(5)
+
+        except Exception as e:
+            st.error(f"Error in recommendation process: {str(e)}")
             return pd.DataFrame()
 
+class StreamlitUI:
+    def __init__(self):
+        self.config = Config()
+        self.data_loader = DataLoader()
+        self.df = self.data_loader.load_dataset()
+        self.models = self.data_loader.load_models()
+
+    def render(self):
+        """Render the Streamlit UI."""
+        st.title('🍅🧀MyHealthMyFood🥑🥬')
         
-        # Debug: Print input data
-        st.write("Input features:", input_data)
+        if self.df is None or self.models is None:
+            st.error("Failed to load required data or models")
+            return
 
-        # Ensure input_data is 2D
-        input_data_reshaped = input_data.reshape(1, -1)
-
-        # Scale the input data
-        input_data_scaled = models['scaler'].transform(input_data_reshaped)
-
-        # Debug: Print scaled input
-        st.write("Scaled input:", input_data_scaled)
-
-        # Get cluster prediction
-        cluster_label = models['kmeans'].predict(input_data_scaled)[0]
-        st.write(f"Assigned cluster: {cluster_label}")
-
-        # Debug: Print column names
-        print(df.columns)
-
-        # Debug: Print cluster distribution
-        if 'Cluster' in df.columns:
-            df['Cluster']=pd.to_numeric(df['Cluster'], errors='coerce')
-            cluster_dist = df['Cluster'].value_counts()
-            st.write("Cluster distribution in dataset:", cluster_dist)
-        else:
-            st.warning("The 'Cluster' column is not found in the DataFrame.")
-
-        # Filter dataset
-        if 'Cluster' in df.columns:
-            cluster_data = df[df['Cluster'] == cluster_label].copy()
-            st.write(f"Number of items in selected cluster: {len(cluster_data)}")
-        else:
-            st.warning("The 'Cluster' column is not found in the DataFrame.")
-            return pd.DataFrame()
-
-        # Ensure feature columns exist
-        required_columns = ['Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 'SaturatedFatContent']
-
-        # Scale features
-        cluster_features = cluster_data[required_columns]
-        cluster_features_scaled = models['scaler'].transform(cluster_features)
-
-        # Calculate similarities
-        similarities = cosine_similarity(input_data_scaled, cluster_features_scaled).flatten()
-
-        # Add similarity scores and sort
-        cluster_data['Similarity'] = similarities
-
-        # Get RF predictions
-        rf_predictions = models['rf_classifier'].predict(cluster_features_scaled)
-        cluster_data['Classification'] = rf_predictions
-
-        # Filter and sort by similarity
-        final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(by='Similarity', ascending=False)
-
-        # If no recommendations after classification, return top similar items
-        if final_recommendations.empty:
-            st.warning("No items passed classification. Returning most similar items instead.")
-            final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
-
-        return final_recommendations[['Name', 'Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 'SaturatedFatContent', 'Similarity']].head(5)
-
-    except Exception as e:
-        st.error(f"Error in recommendation process: {str(e)}")
-        st.write("Full error details:", e)
-        st.write("DataFrame columns:", df.columns)
-        return pd.DataFrame()
-
-# Streamlit UI
-st.title('🍅🧀MyHealthMyFood🥑🥬')
-
-    # Load data and models
-    df = load_dataset()
-    if df is not None:
-        st.write("Dataset preview:")
-        st.write(df.head())
-    else:
-        st.error("Failed to load dataset")
-        return
+        # User inputs
+        gender = st.selectbox("Select your gender", ["Female", "Male"])
+        weight = st.number_input("Enter your weight (kg)", 
+                               min_value=self.config.MIN_WEIGHT,
+                               max_value=self.config.MAX_WEIGHT, 
+                               value=200)
+        height = st.number_input("Enter your height (cm)", 
+                               min_value=self.config.MIN_HEIGHT,
+                               max_value=self.config.MAX_HEIGHT, 
+                               value=220)
+        age = st.number_input("Enter your age (years)", 
+                            min_value=self.config.MIN_AGE,
+                            max_value=self.config.MAX_AGE, 
+                            value=100)
         
-    models = load_models()
-    if models is None:
-        st.error("Failed to load models")
-        return
+        health_condition = st.selectbox(
+            "Select your health condition",
+            ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"]
+        )
+        
+        if health_condition == "No Non-Communicable Disease":
+            st.selectbox(
+                "Select your wellness goal",
+                ["Maintain Weight", "Lose Weight", "Muscle Gain"]
+            )
 
-if df is not None and models is not None:
-    # User inputs
-    gender = st.selectbox("Select your gender", ["Female", "Male"])
-    weight = st.number_input("Enter your weight (kg)", min_value=30, max_value=200, value=70)
-    height = st.number_input("Enter your height (cm)", min_value=100, max_value=250, value=160)
-    age = st.number_input("Enter your age (years)", min_value=1, max_value=100, value=30)
-    health_condition = st.selectbox("Select your health condition", 
-                                  ["No Non-Communicable Disease", "Diabetic", "High Blood Pressure", "High Cholesterol"])
-    
-    if health_condition == "No Non-Communicable Disease":
-        wellness_goal = st.selectbox("Select your wellness goal", 
-                                   ["Maintain Weight", "Lose Weight", "Muscle Gain"])
-    
-if st.button("Get Recommendations"):
-    daily_calories = calculate_caloric_needs(gender, weight, height, age)
-    
-    # Adjust input features based on daily caloric needs
-    protein_grams = 0.8 * weight  # 0.8g per kg of body weight
-    fat_calories = 0.25 * daily_calories  # 25% of daily calories
-    carb_calories = 0.55 * daily_calories  # 55% of daily calories
-    
-    # Convert calories to grams for macronutrients
-    fat_grams = fat_calories / 9  # 9 calories per gram of fat
-    carb_grams = carb_calories / 4  # 4 calories per gram of carb
-    
-    # Create scaled-down input features for single meal recommendation
-    meal_fraction = 0.3  # Assuming this is for a single meal (30% of daily values)
-    input_features = np.array([
-        daily_calories * meal_fraction,  # Calories per meal
-        protein_grams * meal_fraction,   # Protein grams per meal
-        fat_grams * meal_fraction,       # Fat grams per meal
-        carb_grams * meal_fraction,      # Carb grams per meal
-        2000 * meal_fraction,            # Sodium (mg) per meal
-        200 * meal_fraction,             # Cholesterol (mg) per meal
-        (fat_grams * 0.3) * meal_fraction # Saturated fats (30% of total fats) per meal
-    ])
-    
-    recommendations = recommend_food(input_features, df, models)
-    
-    if not recommendations.empty:
-        st.write("Recommended food items:")
-        st.write(recommendations)
-    else:
-        st.warning("No recommendations found. Please try different inputs.")
+        if st.button("Get Recommendations"):
+            self.process_recommendations(gender, weight, height, age)
+
+    def process_recommendations(self, gender: str, weight: float, height: float, age: int):
+        """Process and display food recommendations."""
+        calculator = NutritionCalculator()
+        daily_calories = calculator.calculate_bmr(gender, weight, height, age)
+        input_features = calculator.calculate_macronutrients(weight, daily_calories, self.config)
+        
+        recommender = FoodRecommender(self.df, self.models)
+        recommendations = recommender.get_recommendations(input_features)
+        
+        if not recommendations.empty:
+            st.write("Recommended food items:")
+            st.write(recommendations)
+        else:
+            st.warning("No recommendations found. Please try different inputs.")
+
+def main():
+    ui = StreamlitUI()
+    ui.render()
+
+if __name__ == "__main__":
+    main()
