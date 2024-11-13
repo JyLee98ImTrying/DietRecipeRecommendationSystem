@@ -32,10 +32,32 @@ class DataLoader:
     def load_dataset() -> Optional[pd.DataFrame]:
         """Load and cache the dataset."""
         try:
+            # Read the CSV file
             df = pd.read_csv('df_DR.csv')
+            
+            # Debug information
+            st.write("Dataset loaded successfully")
+            st.write(f"Original shape: {df.shape}")
+            st.write("Columns:", list(df.columns))
+            
+            # Basic data validation
+            required_columns = [
+                'Name', 'Calories', 'ProteinContent', 'FatContent', 
+                'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
+                'SaturatedFatContent', 'Cluster'
+            ]
+            
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                st.error(f"Missing required columns: {missing_columns}")
+                return None
+                
             return df
+            
         except Exception as e:
             st.error(f"Error loading dataset: {str(e)}")
+            st.write("Current directory:", os.getcwd())
+            st.write("Files available:", os.listdir())
             return None
 
     @staticmethod
@@ -87,24 +109,72 @@ class NutritionCalculator:
 
 class FoodRecommender:
     def __init__(self, df: pd.DataFrame, models: Dict[str, Any]):
-        self.df = df
+        self.df = self.preprocess_dataframe(df)
         self.models = models
         self.required_columns = [
             'Calories', 'ProteinContent', 'FatContent', 'CarbohydrateContent',
             'SodiumContent', 'CholesterolContent', 'SaturatedFatContent'
         ]
 
+    def preprocess_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess the dataframe to ensure correct data types and handling."""
+        try:
+            # Create a copy to avoid modifying the original
+            processed_df = df.copy()
+            
+            # Convert Cluster column to numeric, handling any non-numeric values
+            processed_df['Cluster'] = pd.to_numeric(processed_df['Cluster'], errors='coerce')
+            
+            # Drop rows with NaN in Cluster column
+            processed_df = processed_df.dropna(subset=['Cluster'])
+            
+            # Convert Cluster to integer type
+            processed_df['Cluster'] = processed_df['Cluster'].astype(int)
+            
+            # Ensure all required columns are numeric
+            for col in self.required_columns:
+                if col in processed_df.columns:
+                    processed_df[col] = pd.to_numeric(processed_df[col], errors='coerce')
+            
+            # Drop rows with NaN in required columns
+            processed_df = processed_df.dropna(subset=self.required_columns)
+            
+            # Debug information
+            st.write("DataFrame preprocessing complete:")
+            st.write(f"Number of rows after preprocessing: {len(processed_df)}")
+            st.write(f"Unique clusters: {processed_df['Cluster'].unique()}")
+            
+            return processed_df
+            
+        except Exception as e:
+            st.error(f"Error in preprocessing dataframe: {str(e)}")
+            return df
+
     def get_recommendations(self, input_data: np.ndarray) -> pd.DataFrame:
         """Generate food recommendations based on input data."""
         try:
+           # Debug information
+            st.write("Starting recommendation process...")
+            st.write(f"Input data shape: {input_data.shape}")
+            
+            # Reshape and scale input data
             input_data_reshaped = input_data.reshape(1, -1)
             input_data_scaled = self.models['scaler'].transform(input_data_reshaped)
+            
+            # Get cluster prediction
             cluster_label = self.models['kmeans'].predict(input_data_scaled)[0]
-
+            st.write(f"Predicted cluster: {cluster_label}")
+            
+            # Debug: Show cluster distribution
+            cluster_dist = self.df['Cluster'].value_counts()
+            st.write("Cluster distribution:", cluster_dist)
+            
             # Filter by cluster
             cluster_data = self.df[self.df['Cluster'] == cluster_label].copy()
+            st.write(f"Number of items in cluster {cluster_label}: {len(cluster_data)}")
             
             if cluster_data.empty:
+                st.warning(f"No items found in cluster {cluster_label}")
                 return pd.DataFrame()
 
             # Scale features and calculate similarities
@@ -116,21 +186,31 @@ class FoodRecommender:
             cluster_data['Similarity'] = similarities
             rf_predictions = self.models['rf_classifier'].predict(cluster_features_scaled)
             cluster_data['Classification'] = rf_predictions
-
+            
             # Get final recommendations
             final_recommendations = cluster_data[cluster_data['Classification'] == 1].sort_values(
                 by='Similarity', ascending=False
             )
-
+            
+            # If no items pass classification, return top similar items
             if final_recommendations.empty:
+                st.warning("No items passed classification. Returning most similar items.")
                 final_recommendations = cluster_data.sort_values(by='Similarity', ascending=False)
 
-            return final_recommendations[
-                ['Name'] + self.required_columns + ['Similarity']
-            ].head(5)
+            # Select and format output columns
+            output_columns = ['Name'] + self.required_columns + ['Similarity']
+            result = final_recommendations[output_columns].head(5)
+            
+            # Round numeric columns for better display
+            numeric_columns = self.required_columns + ['Similarity']
+            result[numeric_columns] = result[numeric_columns].round(2)
+            
+            return result
 
         except Exception as e:
             st.error(f"Error in recommendation process: {str(e)}")
+            st.write("Full error details:", e)
+            st.write("DataFrame columns:", self.df.columns)
             return pd.DataFrame()
 
 class StreamlitUI:
