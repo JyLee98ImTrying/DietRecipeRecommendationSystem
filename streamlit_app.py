@@ -15,7 +15,7 @@ def load_data():
     try:
         # URL of the raw CSV file from GitHub
         # Note: Use the raw GitHub URL instead of the repository page URL
-        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_1_sample.csv'
+        url = 'https://github.com/JyLee98ImTrying/DietRecipeRecommendationSystem/blob/master/df_DR.csv'
         
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
         
