@@ -20,19 +20,22 @@ except ImportError:
 load_dotenv()
 
 def download_csv_from_s3():
-    s3 = boto3.client(
-        's3',
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    )
-    bucket_name = os.getenv("S3_BUCKET_NAME")
-    s3_file_key = os.getenv("S3_FILE_KEY")
-    local_file_path = "df_DR.csv"  # Local file path to save the downloaded CSV
+    try:
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        )
+        bucket_name = os.getenv("S3_BUCKET_NAME")
+        s3_file_key = os.getenv("S3_FILE_KEY")
+        local_file_path = "df_DR.csv"  # Local file path to save the downloaded CSV
 
-    # Download the file from S3
-    s3.download_file(bucket_name, s3_file_key, local_file_path)
-    return local_file_path
-
+        # Download the file from S3
+        s3.download_file(bucket_name, s3_file_key, local_file_path)
+        return local_file_path
+    except Exception as e:
+        st.error(f"Error loading dataset from S3: {str(e)}")
+        return None
 # Configuration and Constants
 @dataclass
 class Config:
