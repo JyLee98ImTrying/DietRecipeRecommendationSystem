@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import os
+import boto3
 from sklearn.metrics.pairwise import cosine_similarity
 from dataclasses import dataclass
 from typing import Dict, Optional, List, Any
