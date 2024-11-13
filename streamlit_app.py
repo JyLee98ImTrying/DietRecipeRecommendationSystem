@@ -141,7 +141,7 @@ def recommend_food(input_data, df, models):
 st.title('🍅🧀MyHealthMyFood🥑🥬')
 
 # Load data and models first
- df = load_dataset()
+df = load_dataset()
     if df is not None:
         st.write("Dataset preview:")
         st.write(df.head())
