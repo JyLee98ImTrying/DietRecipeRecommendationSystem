@@ -17,6 +17,10 @@ def load_data():
         url = 'https://github.com/JyLee98ImTrying/DietRecipeRecommendationSystem/blob/master/df_DR.csv'
         
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
+
+        print(df.columns)
+        print(df.head())
+
         
         # Add clustering step here after loading the data
         if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
