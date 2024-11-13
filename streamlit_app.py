@@ -8,30 +8,24 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def load_data():
     try:
-        # URL of the raw CSV file from GitHub
-        # Note: Use the raw GitHub URL instead of the repository page URL
+        # Load the dataset from the URL
         url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_DR.csv'
-        
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
 
-        print(df.columns)
-        print(df.head())
+        # Print column names to debug
+        st.write("Columns in the dataset:", df.columns)  # Print columns
 
-        
-        # Add clustering step here after loading the data
-        if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
-            # Get the features for clustering
-            features = df[['Calories', 'ProteinContent', 'FatContent', 
-                         'CarbohydrateContent', 'SodiumContent', 
-                         'CholesterolContent', 'SaturatedFatContent']]
-            
-            # Scale the features
-            scaled_features = st.session_state['models']['scaler'].transform(features)
-            
-            # Predict clusters
-            df['Cluster'] = st.session_state['models']['kmeans'].predict(scaled_features)
-        
-        st.session_state['df'] = df
+        # List of expected columns
+        required_columns = ['Calories', 'ProteinContent', 'FatContent', 
+                            'CarbohydrateContent', 'SodiumContent', 
+                            'CholesterolContent', 'SaturatedFatContent']
+
+        # Check if all required columns are present
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            st.error(f"Missing columns: {', '.join(missing_columns)}")
+            return None
+
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
