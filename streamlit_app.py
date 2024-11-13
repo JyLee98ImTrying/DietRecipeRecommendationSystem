@@ -6,6 +6,25 @@ import os
 from sklearn.metrics.pairwise import cosine_similarity
 from dataclasses import dataclass
 from typing import Dict, Optional, List, Any
+from dotenv import load_dotenv
+from s3_config import download_csv_from_s3
+
+# Load environment variables from .env file
+load_dotenv()
+
+def download_csv_from_s3():
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    )
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    s3_file_key = os.getenv("S3_FILE_KEY")
+    local_file_path = "df_DR.csv"  # Local file path to save the downloaded CSV
+
+    # Download the file from S3
+    s3.download_file(bucket_name, s3_file_key, local_file_path)
+    return local_file_path
 
 # Configuration and Constants
 @dataclass
@@ -30,13 +49,16 @@ class DataLoader:
     @staticmethod
     @st.cache_data
     def load_dataset() -> Optional[pd.DataFrame]:
-        """Load and cache the dataset."""
+        """Load and cache the dataset from S3."""
         try:
-            # Read the CSV file
-            df = pd.read_csv('df_DR.csv')
+            # Download the CSV file from S3 using the helper function
+            local_csv_path = download_csv_from_s3()
+            
+            # Read the downloaded CSV file
+            df = pd.read_csv(local_csv_path)
             
             # Debug information
-            st.write("Dataset loaded successfully")
+            st.write("Dataset loaded successfully from S3")
             st.write(f"Original shape: {df.shape}")
             st.write("Columns:", list(df.columns))
             
@@ -55,9 +77,7 @@ class DataLoader:
             return df
             
         except Exception as e:
-            st.error(f"Error loading dataset: {str(e)}")
-            st.write("Current directory:", os.getcwd())
-            st.write("Files available:", os.listdir())
+            st.error(f"Error loading dataset from S3: {str(e)}")
             return None
 
     @staticmethod
