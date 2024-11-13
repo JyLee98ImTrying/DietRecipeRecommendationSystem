@@ -10,6 +10,12 @@ from typing import Dict, Optional, List, Any
 from dotenv import load_dotenv
 from s3_config import download_csv_from_s3
 
+try:
+    import boto3
+    st.write("boto3 is installed!")
+except ImportError:
+    st.write("boto3 is not installed!")
+
 # Load environment variables from .env file
 load_dotenv()
 
