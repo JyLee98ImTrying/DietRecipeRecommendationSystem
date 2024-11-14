@@ -29,9 +29,6 @@ def load_data():
         
         st.write("DataFrame head:", df.head())
         return df
-
-# Load the data by calling the function
-df = load_data()
         
         # Add clustering step here after loading the data
         if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
@@ -51,6 +48,9 @@ df = load_data()
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
+
+# Load the data by calling the function
+df = load_data()
 
 def load_models():
     try:
