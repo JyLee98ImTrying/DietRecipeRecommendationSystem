@@ -4,5 +4,3 @@ pandas
 numpy
 scikit-learn
 pathlib
-boto3
-python-dotenv
