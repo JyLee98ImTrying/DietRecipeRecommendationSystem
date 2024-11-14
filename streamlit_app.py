@@ -137,7 +137,7 @@ def recommend_food(input_data, df, models):
         
         return final_recommendations[['Name', 'Calories', 'ProteinContent', 'FatContent', 
                                     'CarbohydrateContent', 'SodiumContent', 'CholesterolContent', 
-                                    'SaturatedFatContent', , 'SugarContent', 'RecipeInstructions', 'Similarity']].head(5)
+                                    'SaturatedFatContent', 'SugarContent', 'RecipeInstructions', 'Similarity']].head(5)
                                     
     except Exception as e:
         st.error(f"Error in recommendation process: {str(e)}")
