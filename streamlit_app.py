@@ -12,7 +12,7 @@ st.cache_data.clear()
 # Load data
 def load_data():
     try:
-        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/main/df_sample.csv'
+        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_sample.csv'
         df = pd.read_csv(url, delimiter=',', encoding='utf-8', on_bad_lines='skip')
         
         # Add clustering step here after loading the data
