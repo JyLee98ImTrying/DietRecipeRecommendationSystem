@@ -138,9 +138,9 @@ if st.button("Get Recommendations"):
     else:
         st.warning("No recommendations found. Please try different inputs.")
 
-if st.button("Next Recommendations"):
-    st.session_state['recommendation_idx'] += 5
-    recommendations = recommend_food(input_features, df, models, start_idx=st.session_state['recommendation_idx'])
+    if st.button("Next Recommendations"):
+        st.session_state['recommendation_idx'] += 5
+        recommendations = recommend_food(input_features, df, models, start_idx=st.session_state['recommendation_idx'])
     
     if not recommendations.empty:
         st.write("Next recommended food items:")
