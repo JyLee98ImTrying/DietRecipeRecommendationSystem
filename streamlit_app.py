@@ -43,6 +43,14 @@ def load_models():
         st.error(f"Error loading models: {str(e)}")
         return None
 
+# Function to calculate daily caloric needs
+def calculate_caloric_needs(gender, weight, height, age):
+    if gender == "Female":
+        BMR = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+    else:
+        BMR = 66 + (13.7 * weight) + (5 * height) - (6.8 * age)
+    return BMR
+
 # Recommendation function
 def recommend_food(input_data, df, models, start_idx=0, num_items=5):
     try:
@@ -112,9 +120,13 @@ if st.button("Get Recommendations"):
     carb_grams = carb_calories / 4
     meal_fraction = 0.3
     input_features = np.array([
-        daily_calories * meal_fraction, protein_grams * meal_fraction, fat_grams * meal_fraction,
-        carb_grams * meal_fraction, 2000 * meal_fraction, 200 * meal_fraction,
-        (fat_grams * 0.3) * meal_fraction
+        daily_calories * meal_fraction,  # Calories per meal
+        protein_grams * meal_fraction,   # Protein grams per meal
+        fat_grams * meal_fraction,       # Fat grams per meal
+        carb_grams * meal_fraction,      # Carb grams per meal
+        2000 * meal_fraction,            # Sodium (mg) per meal
+        200 * meal_fraction,             # Cholesterol (mg) per meal
+        (fat_grams * 0.3) * meal_fraction # Saturated fats (30% of total fats) per meal
     ])
     
     st.session_state['recommendation_idx'] = 0
