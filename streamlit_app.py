@@ -11,15 +11,27 @@ import requests
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
 
-
 def load_data():
     try:
         # URL of the raw CSV file from GitHub
-        # Note: Use the raw GitHub URL instead of the repository page URL
-        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/master/df_sample.csv'
+        url = 'https://raw.githubusercontent.com/JyLee98ImTrying/DietRecipeRecommendationSystem/main/df_sample.csv'
         
+        # Send GET request to fetch the CSV file
+        response = requests.get(url)
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            st.error(f"Failed to download file: Status code {response.status_code}")
+            return None
+        
+        # Load CSV into DataFrame
         df = pd.read_csv(io.BytesIO(response.content), delimiter=',', encoding='ISO-8859-1', on_bad_lines='skip')
+        
+        st.write("DataFrame head:", df.head())
+        return df
 
+# Load the data by calling the function
+df = load_data()
         
         # Add clustering step here after loading the data
         if 'Cluster' not in df.columns and 'kmeans' in st.session_state.get('models', {}):
