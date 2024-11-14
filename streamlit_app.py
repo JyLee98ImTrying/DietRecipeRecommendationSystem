@@ -5,7 +5,6 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 from sklearn.metrics.pairwise import cosine_similarity
-import gdown
 
 # Clear cache to ensure fresh data loading
 st.cache_data.clear()
